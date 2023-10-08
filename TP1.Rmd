@@ -275,12 +275,30 @@ ggplot(internet, aes(x=Estatura)) + geom_boxplot()
 ```
 
 ```{r}
-q2 = quantile(internet$Estatura, 0.75)
+q3 = quantile(internet$Estatura, 0.75)
 q1 = quantile(internet$Estatura, 0.25)
-IQR(internet$Estatura)
+riq = IQR(internet$Estatura)
+```
+
+```{r}
+#1.5 veces es salvaje
+#3 veces es severo
+
+li_salvaje = q1- 1.5 * riq
+ls_salvaje = q3 +1.5 * riq 
+
+li_severo = q1- 3 * riq
+ls_severo = q3 +3 * riq 
+
 ```
 
 
+```{r}
+internet %>% select(Estatura) %>% 
+  mutate(salvaje = (Estatura < li_salvaje | Estatura > ls_salvaje),
+         severo = (Estatura < li_severo | Estatura > ls_severo) ) %>% 
+  count(severo, salvaje)
 
+```
 
 
