@@ -90,12 +90,36 @@ recep_tidy %>%
   arrange(-promedio)
 
 ```
+
+Calcule el promedio de cada una de las aspirantes tomando en cuenta todos los rubros y ambos jueces.
+
+```{r}
+recep_tidy %>% 
+  group_by(candidatos) %>% 
+  summarise(promedio = mean(Puntuacion)) %>% 
+  arrange(-promedio)
+```
+
 Transformar las puntuaciones observadas de modo tal que cada una de las seis variables tenga media 0 y dispersión 1. ¿Cuál sería el objetivo de esta transformación?
 
+```{r}
+recep_tidy %>% 
+  pivot_wider(names_from = c(rubro, juez), values_from = Puntuacion) 
+```
 
 ```{r}
 cbind(recepcionistas$candidatos, data.frame(scale(recepcionistas[,2:7])) )
 ```
+
+```{r}
+recep_tidy %>% 
+  group_by(juez, candidatos) %>% 
+  summarise(promedio = mean(Puntuacion)) %>% 
+  pivot_wider(names_from = juez, values_from = promedio) %>% 
+  mutate(juez1 = scale(juez1), 
+         juez2 = scale(juez2))
+```
+
 
 ```{r}
 cbind(recepcionistas$candidatos, recepcionistas[, c(1, 5:7)] %>% mutate(promedio_J2 = (recepcionistas$cord.juez2+recepcionistas$pres.juez2+recepcionistas$idiom.juez2)/3)  %>% select(promedio_J2) %>% scale() %>% data.frame() )
