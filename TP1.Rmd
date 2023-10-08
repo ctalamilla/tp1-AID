@@ -1,0 +1,146 @@
+---
+title: "TP1"
+author: "Cristian Salinas"
+date: "2023-10-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library("readxl")
+library('tidyverse')
+library('here')
+```
+
+```{r}
+library(readxl)#lectura
+library(dplyr) #manipulacion de datos
+library(kableExtra) #tablas
+library(ggplot2) #graficos
+library(tidyverse) #manipulacion de datos
+library(ggpubr) #para juntar
+library(ggforce) # grafico de violin y jitter
+library(GGally) # ggpairs
+library(corrplot) # para correlogramas
+```
+
+
+
+```{r}
+here::here()
+```
+
+```{r}
+recepcionistas <- read_excel("recepcionistas.xls")
+```
+
+```{r}
+colnames(recepcionistas) <- gsub(" ", "", colnames(recepcionistas))
+```
+
+```{r}
+glimpse(recepcionistas)
+```
+
+```{r}
+recepcionistas %>% head()
+```
+
+Se transforman los datos para responder las preguntas del trabajo practico de una manera mas practica.
+
+```{r}
+recep_tidy = recepcionistas %>%  pivot_longer(cols = 2:7, # Columnas que deseas transformar
+               names_to = "Variable",   # Nombre de la nueva columna de variables
+               values_to = "Puntuacion") %>% 
+  separate_wider_delim(Variable, delim = ".", names = c("rubro", "juez")) %>% 
+  mutate(candidatos = as.factor(candidatos),
+         rubro = as.factor(rubro),
+         juez = as.factor(juez))
+```
+
+
+
+```{r}
+recep_tidy %>% head(5)
+```
+
+Calcule en promedio por juez de cada una de las aspirantes. ¿Cuál le parece que seleccionaría cada uno de ellos? ¿Existe coincidencia?
+
+Se calcula el promedio de puntaje por juez y candidata para cada juez.
+
+```{r}
+recep_tidy %>% 
+  group_by(juez, candidatos) %>% 
+  summarise(promedio = mean(Puntuacion)) %>% 
+  filter(juez =="juez1") %>% 
+  arrange(-promedio)
+
+recep_tidy %>% 
+  group_by(juez, candidatos) %>% 
+  summarise(promedio = mean(Puntuacion)) %>% 
+  filter(juez =="juez2") %>% 
+  arrange(-promedio)
+
+```
+Transformar las puntuaciones observadas de modo tal que cada una de las seis variables tenga media 0 y dispersión 1. ¿Cuál sería el objetivo de esta transformación?
+
+
+```{r}
+cbind(recepcionistas$candidatos, data.frame(scale(recepcionistas[,2:7])) )
+```
+
+```{r}
+cbind(recepcionistas$candidatos, recepcionistas[, c(1, 5:7)] %>% mutate(promedio_J2 = (recepcionistas$cord.juez2+recepcionistas$pres.juez2+recepcionistas$idiom.juez2)/3)  %>% select(promedio_J2) %>% scale() %>% data.frame() )
+
+```
+
+```{r}
+cbind(recepcionistas$candidatos, recepcionistas[, c(1, 2:4)] %>% 
+        mutate(promedio_J1 = (recepcionistas$cord.juez1+recepcionistas$pres.juez1+recepcionistas$idiom.juez1)/3) %>%
+        select(promedio_J1) %>% 
+        scale() %>% 
+        data.frame())
+```
+
+```{r}
+recepcionistas
+```
+```{r}
+recepcionistas %>%  pivot_longer(cols = 2:7, # Columnas que deseas transformar
+               names_to = "Variable",   # Nombre de la nueva columna de variables
+               values_to = "Puntuacion") %>% 
+  separate_wider_delim(Variable, delim = ".", names = c("rubro", "juez"))
+```
+```{r}
+a %>% ggplot(aes(x=Puntuacion, y = candidatos, fill = juez)) + 
+  geom_boxplot() 
+
+```
+
+
+```{r}
+ggplot(a,aes(x=rubreo,y=Puntuacion,color=candidatos))+
+  geom_line(aes(group =candidatos))+ 
+  labs(title = "juez 1") + 
+  theme(axis.text.x  = element_text(angle=90))+
+  facet_row(~juez)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
