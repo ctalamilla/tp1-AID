@@ -152,8 +152,26 @@ ggplot(recep_tidy,aes(x=rubro,y=Puntuacion,color=candidatos))+
   theme(axis.text.x  = element_text(angle=90))+
   facet_row(~juez)
 ```
+## Ejercicio 2
 
+```{r}
+internet = read_excel("Internet2013.xls")
+```
 
+Clasificar las variables de la base. Para las variables numéricas construir un gráfico de coordenadas paralelas.
+```{r}
+internet %>% select(Nacionalidad,
+                    Edad,
+                    Estatura,
+                    Uso,
+                    Temperatura,
+                    Autos,
+                    Cigarrillos) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 2:7) %>% 
+  ggplot(aes(x=Valor, y= Variable, fill = Nacionalidad))+
+  geom_boxplot(alpha=0.5)
+````
 
 
 
