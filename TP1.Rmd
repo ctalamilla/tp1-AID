@@ -104,7 +104,13 @@ Transformar las puntuaciones observadas de modo tal que cada una de las seis var
 
 ```{r}
 recep_tidy %>% 
-  pivot_wider(names_from = c(rubro, juez), values_from = Puntuacion) 
+  pivot_wider(names_from = c(rubro, juez), values_from = Puntuacion) %>% 
+  mutate(cord_juez1 = scale(cord_juez1),
+         pres_juez1 = scale(pres_juez1),
+         idiom_juez1 = scale(idiom_juez1),
+         cord_juez2 = scale(cord_juez2),
+         pres_juez2 = scale(pres_juez2),
+         idiom_juez2 = scale(idiom_juez2))
 ```
 
 ```{r}
@@ -135,28 +141,16 @@ cbind(recepcionistas$candidatos, recepcionistas[, c(1, 2:4)] %>%
 ```
 
 ```{r}
-recepcionistas
-```
-```{r}
-recepcionistas %>%  pivot_longer(cols = 2:7, # Columnas que deseas transformar
-               names_to = "Variable",   # Nombre de la nueva columna de variables
-               values_to = "Puntuacion") %>% 
-  separate_wider_delim(Variable, delim = ".", names = c("rubro", "juez"))
-```
-```{r}
-a %>% ggplot(aes(x=Puntuacion, y = candidatos, fill = juez)) + 
+recep_tidy %>% ggplot(aes(x=Puntuacion, y = candidatos, fill = juez)) + 
   geom_boxplot() 
-
 ```
 
-
 ```{r}
-ggplot(a,aes(x=rubreo,y=Puntuacion,color=candidatos))+
+ggplot(recep_tidy,aes(x=rubro,y=Puntuacion,color=candidatos))+
   geom_line(aes(group =candidatos))+ 
   labs(title = "juez 1") + 
   theme(axis.text.x  = element_text(angle=90))+
   facet_row(~juez)
-
 ```
 
 
