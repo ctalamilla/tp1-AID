@@ -61,8 +61,6 @@ recep_tidy = recepcionistas %>%  pivot_longer(cols = 2:7, # Columnas que deseas 
          juez = as.factor(juez))
 ```
 
-
-
 ```{r}
 recep_tidy %>% head(5)
 ```
@@ -70,6 +68,13 @@ recep_tidy %>% head(5)
 Calcule en promedio por juez de cada una de las aspirantes. ¿Cuál le parece que seleccionaría cada uno de ellos? ¿Existe coincidencia?
 
 Se calcula el promedio de puntaje por juez y candidata para cada juez.
+
+```{r}
+recep_tidy %>% 
+  group_by(juez, candidatos) %>% 
+  summarise(promedio = mean(Puntuacion)) %>% 
+  pivot_wider(names_from = juez, values_from = promedio)
+```
 
 ```{r}
 recep_tidy %>% 
