@@ -27,36 +27,49 @@ library(GGally) # ggpairs
 library(corrplot) # para correlogramas
 ```
 
-
-
 ```{r}
 here::here()
 ```
+
+## Ejercicio 1 (Transformaciones de datos).
+
+Seis candidatas son evaluadas para el puesto de recepcionista en una em- presa, para ello pasan por dos entrevistas. En la primera las evalúa el responsa- ble de recursos humanos de la empresa (juez 1) y en la segunda el responsable del área de la cual van a depender (juez 2). La asignación de puntajes es en cordialidad, presencia y manejo de idiomas. Los puntajes asignados indepen- dientemente por estos jueces se encuentran en el archivo recepcionistas.xls.
+
+
+### Lectura y Transformación de Datos
+
+(a) Calcule en promedio por juez de cada una de las aspirantes. ¿Cuál le parece que seleccionaría cada uno de ellos? ¿Existe coincidencia?
 
 ```{r}
 recepcionistas <- read_excel("recepcionistas.xls")
 ```
 
 ```{r}
+glimpse(recepcionistas)
+```
+
+Se puede observar la existencia de espacios en los nombres de las columnas. A continuación se cambia el nombre de las columnas para un mejor desarrollo.
+
+```{r}
 colnames(recepcionistas) <- gsub(" ", "", colnames(recepcionistas))
 ```
 
 ```{r}
-glimpse(recepcionistas)
+colnames(recepcionistas)
 ```
 
 ```{r}
 recepcionistas %>% head()
 ```
 
-Se transforman los datos para responder las preguntas del trabajo practico de una manera mas practica.
+En el dataset original se puede observar que no esta en un formato adecuado para un analisis de datos usando la filosofia Tidy. Por ello, se transforman los datos para responder las preguntas del trabajo practico de una manera mas practica.
 
 ```{r}
 recep_tidy = recepcionistas %>%  pivot_longer(cols = 2:7, # Columnas que deseas transformar
                names_to = "Variable",   # Nombre de la nueva columna de variables
-               values_to = "Puntuacion") %>% 
-  separate_wider_delim(Variable, delim = ".", names = c("rubro", "juez")) %>% 
-  mutate(candidatos = as.factor(candidatos),
+               values_to = "Puntuacion") %>% # Nombre de la nueva columna que tendra los valores
+  separate_wider_delim(Variable, delim = ".", names = c("rubro", "juez")) %>% # Se separan la columna Variable en 2 variables
+  mutate(candidatos = as.factor(candidatos), # las variables categorias se pasan a tipo factor.
          rubro = as.factor(rubro),
          juez = as.factor(juez))
 ```
@@ -65,18 +78,16 @@ recep_tidy = recepcionistas %>%  pivot_longer(cols = 2:7, # Columnas que deseas 
 recep_tidy %>% head(5)
 ```
 
-Calcule en promedio por juez de cada una de las aspirantes. ¿Cuál le parece que seleccionaría cada uno de ellos? ¿Existe coincidencia?
+### a. Calcule en promedio por juez de cada una de las aspirantes. ¿Cuál le parece que seleccionaría cada uno de ellos? ¿Existe coincidencia?
 
-Se calcula el promedio de puntaje por juez y candidata para cada juez.
-
-```{r}
+```{r warning=FALSE, message=FALSE}
 recep_tidy %>% 
   group_by(juez, candidatos) %>% 
   summarise(promedio = mean(Puntuacion)) %>% 
   pivot_wider(names_from = juez, values_from = promedio)
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 recep_tidy %>% 
   group_by(juez, candidatos) %>% 
   summarise(promedio = mean(Puntuacion)) %>% 
@@ -90,6 +101,15 @@ recep_tidy %>%
   arrange(-promedio)
 
 ```
+```{r warning=FALSE, message=FALSE}
+recep_tidy %>% 
+  group_by(juez, candidatos) %>% 
+  summarise(promedio = mean(Puntuacion)) %>% 
+  ggplot(aes(x=candidatos, y = promedio))+
+  geom_col(aes(fill=juez))+
+  facet_wrap(~juez, ncol=2)
+```
+
 
 Calcule el promedio de cada una de las aspirantes tomando en cuenta todos los rubros y ambos jueces.
 
@@ -126,7 +146,6 @@ recep_tidy %>%
          juez2 = scale(juez2))
 ```
 
-
 ```{r}
 cbind(recepcionistas$candidatos, recepcionistas[, c(1, 5:7)] %>% mutate(promedio_J2 = (recepcionistas$cord.juez2+recepcionistas$pres.juez2+recepcionistas$idiom.juez2)/3)  %>% select(promedio_J2) %>% scale() %>% data.frame() )
 
@@ -152,6 +171,7 @@ ggplot(recep_tidy,aes(x=rubro,y=Puntuacion,color=candidatos))+
   theme(axis.text.x  = element_text(angle=90))+
   facet_row(~juez)
 ```
+
 ## Ejercicio 2
 
 ```{r}
@@ -162,8 +182,8 @@ internet = read_excel("Internet2013.xls")
 scale(internet$Temperatura)
 ```
 
-
 Clasificar las variables de la base. Para las variables numéricas construir un gráfico de coordenadas paralelas.
+
 ```{r}
 internet %>% select(Nacionalidad,
                     Edad,
@@ -176,14 +196,11 @@ internet %>% select(Nacionalidad,
   pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 2:7) %>% 
   ggplot(aes(x=Valor, y= Variable, fill = Nacionalidad))+
   geom_boxplot(alpha=0.5)
-````
 
 Construir la tabla de frecuencias de la variable sexo. ¿Hay algún valor que llame la atención? ¿Qué tipo de error considera que es?
 
-```{r}
 unique(internet$Sexo)
 ```
-
 
 ```{r}
 table(internet$Sexo)
@@ -194,6 +211,7 @@ internet %>% ggplot(aes(x=Sexo))+geom_bar()
 ```
 
 Ordenar los datos por la variable Edad. ¿Encontró algún valor extraño? ¿Qué tipo de error puede ser? item Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
+
 ```{r}
 internet$Edad %>% summary()
 ```
@@ -201,15 +219,14 @@ internet$Edad %>% summary()
 ```{r}
 internet %>% arrange(Edad) %>% select(Edad)
 ```
+
 ```{r}
 internet %>% filter(Edad >=0)
 ```
 
-
 ```{r}
 table(internet$Sitio)
 ```
-
 
 ```{r}
 k = 10 * log(nrow(internet))#dixo
@@ -223,23 +240,24 @@ internet %>% select(Temperatura) %>%
   summarise(fi = n()) %>%
   mutate(f = fi / sum(fi) * 100)
 ```
+
 ```{r}
 internet %>% select(Temperatura) %>% ggplot(aes(x=Temperatura))+
   geom_histogram(bins = round(k2), fill = 'blue', color='black')
 ```
+
 ```{r}
 internet$Autos %>% summary()
 ```
-
 
 ```{r}
 internet %>% select(Autos) %>% ggplot(aes(x=Autos))+
   geom_boxplot(fill = 'blue', color='black')
 ```
+
 ```{r}
 cut(internet$Autos, breaks  = k)
 ```
-
 
 ```{r}
 internet %>% select(Autos) %>% 
@@ -269,7 +287,6 @@ internet %>% select(Nacionalidad,
   geom_boxplot(alpha=0.5)
 ```
 
-
 ```{r}
 ggplot(internet, aes(x=Estatura)) + geom_boxplot()
 ```
@@ -292,8 +309,6 @@ ls_severo = (q3 +3 * riq )[[1]]
 
 ```
 
-
-
 ```{r}
 
 internet$Estatura[internet$Estatura > ls_salvaje]
@@ -305,13 +320,11 @@ internet%>% filter(Estatura > ls_salvaje) %>%
   select(Estatura)
 ```
 
-
 ```{r}
 internet %>% select(Estatura) %>% 
   mutate(salvaje = (Estatura < li_salvaje | Estatura > ls_salvaje )) %>% 
   filter(salvaje == TRUE)
 ```
-
 
 ```{r}
 internet %>% select(Estatura) %>% 
@@ -319,7 +332,6 @@ internet %>% select(Estatura) %>%
          severo = (Estatura < li_severo | Estatura > ls_severo) ) %>% 
   count(severo, salvaje)
 ```
-
 
 ## Ejercicio 3
 
@@ -334,23 +346,23 @@ gorriones %>% head(3)
 ```{r}
 gorriones %>% summary()
 ```
-(a) Indicar en cada caso de que tipo de variable se trata.
-Pajaro : ID
-Sobrevida : Factor
+
+(a) Indicar en cada caso de que tipo de variable se trata. Pajaro : ID Sobrevida : Factor
 
 ```{r}
 str(gorriones)
 ```
+
 ```{r}
 gorriones = gorriones %>% 
   mutate(sobrevida = as.factor(sobrevida))
 
 gorriones %>% head(3)
 ```
+
 ```{r}
 
 ```
-
 
 ```{r}
 gorriones %>% 
@@ -371,17 +383,17 @@ gorriones %>%
 # group by
 # summarise
 ```
-(b) Confeccionar un informe para cada variable( univariado).
-https://cran.r-project.org/web/packages/summarytools/vignettes/introduction.html
+
+(b) Confeccionar un informe para cada variable( univariado). <https://cran.r-project.org/web/packages/summarytools/vignettes/introduction.html>
 
 ```{r}
 library(summarytools)
 ```
 
-
 ```{r}
 gorriones %>% summary()
 ```
+
 ```{r}
 descr(gorriones)
 ```
@@ -389,7 +401,6 @@ descr(gorriones)
 ```{r}
 dfSummary(gorriones)
 ```
-
 
 ```{r}
 dfSummary(gorriones) %>% view()
@@ -404,13 +415,13 @@ hlargoT = 3.49 * sd(gorriones$largototal) * nrow(gorriones)**-(1/3)
 ```
 
 Ejemplo GGPLOT
+
 ```{r}
 ggplot(gorriones   ,    aes(x=largototal, y = humero))  +
   geom_point(aes( color = extension, size = extension, shape = sobrevida))+
   geom_line()
 
 ```
-
 
 ```{r}
 #colnames(gorriones)[c(2,3,4,5,6)]
@@ -437,8 +448,6 @@ recepcionistas %>% pivot_longer(cols = 2:7, names_to = 'rubrojuez', values_to = 
   separate_wider_delim(rubrojuez, delim = ".", names = c("rubro", "juez"))
   
 ```
-
-
 
 #Ojo!!, las variables estan transformadas
 
@@ -474,18 +483,17 @@ gorriones %>% select(largototal,
 library(GGally)
 ```
 
-
 ```{r}
 
 ggpairs(gorriones, columns = 2:7, aes(color=sobrevida, alpha=0.5))
 ```
-
 
 ```{r}
 ggplot(gorriones, aes(x=largototal, y = extension, color=sobrevida))+
   geom_point(alpha=0.7)+
   geom_smooth(method = lm )
 ```
+
 (f) Construir la matriz de diagramas de dispersión. ¿Considera que algún par de estas medidas están relacionadas? Estudiar si la asociación de al- gunas de estas medidas es diferente en alguno de los grupos.
 
 ```{r}
@@ -496,6 +504,7 @@ library("ggcorrplot")
 ```{r}
 cor(gorriones[,2:6])
 ```
+
 ```{r}
 
 ggcorrplot(cor(gorriones[,2:6]), hc.order = TRUE, type = "lower",
@@ -508,18 +517,11 @@ ggcorrplot(cor(gorriones[,2:6]), hc.order = TRUE, type = "lower",
 razaperros <- read_excel("razaperros.xls")
 ```
 
-
 (a) Realizar un gráfico de estrellas por raza (utilizando las variables tamaño, peso, velocidad, inteligencia y afectividad.
-
 
 ```{r}
 razaperros
 ```
-
-```{r}
-
-```
-
 
 ```{r}
 ggplot(data = razaperros, aes(x = inteligencia)) + geom_bar(fill = "lightblue", colour = "black")+ coord_polar() + 
@@ -527,24 +529,17 @@ ggplot(data = razaperros, aes(x = inteligencia)) + geom_bar(fill = "lightblue", 
 ```
 
 ```{r}
-recepcionistas %>% pivot_longer(cols = 2:7, values_to = 'puntos', names_to = 'variables') %>% 
-  pivot_wider(names_from = variables, values_from = puntos) 
-```
-```{r}
-
 stars(razaperros[,2:6], full=F, cex=0.8, flip.labels = T, labels = razaperros$raza, col.stars = cm.colors(9))
 ```
 
 ```{r}
-# Library
 library(fmsb)
- 
-# Create data: note in High school for Jonathan:
-data <- as.data.frame(matrix( sample( 2:20 , 10 , replace=T) , ncol=10))
-colnames(data) <- c("math" , "english" , "biology" , "music" , "R-coding", "data-viz" , "french" , "physic", "statistic", "sport" )
- 
-# To use the fmsb package, I have to add 2 lines to the dataframe: the max and min of each topic to show on the plot!
-data <- rbind(rep(20,10) , rep(0,10) , data)
+```
+
+```{r}
+#raza
+raza = razaperros[2,2:7]
+data <- rbind(rep(3,6) , rep(0,6) , raza)
  
 # Check your data, it has to look like this!
 # head(data)
@@ -553,5 +548,19 @@ data <- rbind(rep(20,10) , rep(0,10) , data)
 radarchart(data)
 ```
 
+```{r}
+data <- as.data.frame(matrix( sample( 2:20 , 10 , replace=T) , ncol=10))
+colnames(data) <- c("math" , "english" , "biology" , "music" , "R-coding", "data-viz" , "french" , "physic", "statistic", "sport" )
 
+data$individual <- c("individual1", "individual2", "individual3")
 
+# El primer individuo
+data[1, 1:10] <- c( 20 , 10 , 14 , 8 , 2 , 8 , 4 , 4 , 19 , 14 )
+
+# El segundo individuo
+data[2, 1:10] <- c( 10 , 5 , 10 , 4 , 20 , 15 , 8 , 9 , 12 , 17 )
+
+# El tercero individuo
+data[3, 1:10] <- c( 5 , 14 , 14 , 8 , 4 , 9 , 4 , 4 , 10 , 12 )
+
+```
