@@ -5,7 +5,6 @@ date: "2023-10-07"
 output: html_document
 ---
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -21,6 +20,9 @@ library(ggpubr) #para juntar
 library(ggforce) # grafico de violin y jitter
 library(GGally) # ggpairs
 library(corrplot) # para correlogramas
+library(summarytools) #tools and functions for generating descriptive statistics, summary tables, and reports for data analysis and data exploration in R
+library(fmsb) #descriptive statistics, hypothesis testing, and data visualization
+library(ggcorrplot) #visualizing correlations between variables in a dataset
 ```
 ```{r file-paths, include=FALSE }
 # With here::here(), you don't need to worry about the specific file path or whether your code will work on different operating systems. It helps make your code more portable and project-independent by automatically resolving file paths based on the location of your script.
@@ -125,7 +127,8 @@ ggplot(recep_tidy_scale,aes(x=rubro,y=puntuacion,color=candidatos))+
   theme(axis.text.x  = element_text(angle=90))+
   facet_row(~juez)
 ```
-### **Ejercicio 2** -Tipos de variables resúmenes: Internet. 2013
+
+### **Ejercicio 2** - Tipos de variables resúmenes: Internet. 2013
 
 #### Clasificar las variables de la base. Para las variables numéricas construir un gráfico de coordenadas paralelas.
 
@@ -159,84 +162,127 @@ internet %>% select(Nacionalidad,
              alphaLines = 0.5)
 ```
 
-Construir la tabla de frecuencias de la variable sexo. ¿Hay algún valor que llame la atención? ¿Qué tipo de error considera que es?
 
-```{r}
-unique(internet$Sexo)
-```
+#### Construir la tabla de frecuencias de la variable sexo.
 
-
-```{r}
-table(internet$Sexo)
-```
-
-```{r}
+```{r, echo = FALSE, out.width='100%', fig.align='center'}
+table(internet$Sexo) #counts the frequency of each unique value or combination of values in one or more categorical variables and presents the counts in a tabular format
 internet %>% ggplot(aes(x=Sexo))+geom_bar()
 ```
 
-Ordenar los datos por la variable Edad. ¿Encontró algún valor extraño? ¿Qué tipo de error puede ser? item Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
-```{r}
+#### ¿Hay algún valor que llame la atención? ¿Qué tipo de error considera que es?
+
+Existe un unico registro que no contiene un valor esperado para la variable categorica sexo que es el 0. Esto seguramente se debe a un error durante la carga de los datos. 
+
+#### Ordenar los datos por la variable Edad.
+
+```{r, echo = FALSE}
 internet$Edad %>% summary()
+internet %>% group_by(Edad) %>% summarise(Frecuencia = n()) %>% arrange(-Edad)
+internet %>% filter(Edad < 0 | Edad>110)
 ```
 
-```{r}
-internet %>% arrange(Edad) %>% select(Edad)
-```
-```{r}
-internet %>% filter(Edad >=0)
-```
+#### ¿Encontró algún valor extraño? ¿Qué tipo de error puede ser? 
 
+Existen varios registros que indican ocurrencias de edades erroneas, entre ellas:
 
-```{r}
+- Un registro que indica una edad de 120
+- Un registro que indica una edad de 180
+- Un registro que indica una edad de 280
+- Un registro que indica una edad de -44
+
+#### Construir la tabla de frecuencias de la variable Sitio.
+
+```{r, echo = FALSE}
+#La variable sitio es una variable categorica que indica el sitio preferido al que se conecta cada individuo siendo:
+# 1- chat,  2 - correo electrónico 3-buscadores 4 – software 5 – música 6 – deportes 7 - otros
+
+internet$Sitio %>% summary()
+internet %>% group_by(Sitio) %>% summarise(Frecuencia = n()) %>% arrange(-Sitio)
 table(internet$Sitio)
 ```
+#### ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
 
+Existen varios registros que cuyos valores escapan a los valores establecidos para la variable categorica sitio, entre ellos:
 
-```{r}
+- Un registro que indica un valor de 8 (no corresponde a ningun valor esperado para esta variable que solo toma los valores del 1 al 7)
+- Un registro que indica un valor de 28 (no corresponde a ningun valor esperado para esta variable que solo toma los valores del 1 al 7)
+
+#### Proceda de forma similar para las variables Temperatura, Autos y Cigarrillos.
+
+### Analisis Temperatura
+```{r, echo = FALSE, out.width='100%', fig.align='center'}
+#internet %>% summary()
+internet$Temperatura %>% summary()
+internet %>% group_by(Temperatura) %>% summarise(Frecuencia = n()) %>% arrange(-Temperatura)
+internet %>% filter(Temperatura > 40) %>% select(Temperatura)
+
+#Calcular la cantidad de intervalos en los cuales clasificar los registros de acuerdo a la variable temperatura
 k = 10 * log(nrow(internet))#dixo
 k2 = 1 + 3.322 * log(nrow(internet))#strudges
-```
 
-```{r}
-internet %>% select(Temperatura) %>% 
-  mutate(intervalos = cut(Temperatura, breaks  = k2)) %>% 
-  group_by(intervalos) %>%
-  summarise(fi = n()) %>%
-  mutate(f = fi / sum(fi) * 100)
+temperaturas = internet %>% select(Temperatura) %>% 
+               mutate(temperatura = cut(Temperatura, breaks  = k2)) %>% 
+               group_by(temperatura) %>%
+               summarise(fi = n()) %>%
+               mutate(f = fi / sum(fi) * 100)
+
+count_bars = round(k2) 
+colors = rainbow(count_bars)
+internet %>% select(Temperatura) %>% ggplot(aes(x=Temperatura)) + geom_histogram(bins = round(k2), fill=colors, color='black')
 ```
-```{r}
-internet %>% select(Temperatura) %>% ggplot(aes(x=Temperatura))+
-  geom_histogram(bins = round(k2), fill = 'blue', color='black')
-```
-```{r}
+#### ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
+
+Existen dos registros que cuyos valores escapan a los valores establecidos para la variable temperatura, entre ellos:
+
+- Un registro que indica una temperatura media anual de 94 grados celcius
+- Un registro que indica una temperatura media anual de 131 grados celcius
+
+
+### Analisis Autos
+
+```{r, echo = FALSE}
 internet$Autos %>% summary()
+internet %>% group_by(Autos) %>% summarise(Frecuencia = n()) %>% arrange(-Autos)
+internet %>% select(Autos) %>% ggplot(aes(x=Autos))+geom_boxplot(fill = 'blue', color='black')
+internet %>% filter(Autos >200)
+```
+#### ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
+
+Existe un registro que indica la presencia de 2680 autos en una unica manzana, lo cual indica un claro error en el valor ingresado.
+
+### Analisis Cigarrillos
+
+```{r, echo = FALSE}
+#Cantidad de cigarrillos consumidos mientras se utiliza Internet
+internet$Cigarrillos %>% summary()
+internet %>% group_by(Cigarrillos) %>% summarise(Frecuencia = n()) %>% arrange(-Cigarrillos)
+internet %>% select(Cigarrillos) %>% ggplot(aes(x=Cigarrillos))+geom_boxplot(fill = 'blue', color='black')
+internet %>% filter(Cigarrillos >25)
 ```
 
+#### ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
 
-```{r}
-internet %>% select(Autos) %>% ggplot(aes(x=Autos))+
-  geom_boxplot(fill = 'blue', color='black')
-```
-```{r}
-cut(internet$Autos, breaks  = k)
-```
+Existen varios registros que cuyos valores son extremadamente elevados al punto de considerarse altamente improbables y erroneos:
 
+- Un individuo que consume 100 cicarrillos mientras utiliza internet
+- Un individuo que consume 75 cicarrillos mientras utiliza internet
 
-```{r}
-internet %>% select(Autos) %>% 
-  mutate(intervalos = cut(Autos, breaks  = k)) %>% 
-  group_by(intervalos) %>%
-  summarise(fi = n()) %>%
-  mutate(f = fi / sum(fi) * 100)
-```
+#### Elimine de la base los valores que no son posibles y que seguramente corresponde a un error de tipeo. 
+(Hacer)
 
-```{r}
-internet %>% summary()
-```
+#### ¿Para cuáles de las variables tiene sentido calcular la media? ¿Y la mediana?
 
-g
+Tiene sentido calcular media y mediana paraquellas variables que son numericas, no asi para las categoricas.
 
-```{r}
+#### ¿Cuáles de las variables le parecen simétricas a partir de estos resúmenes? Confirme estas observaciones mediante un boxplot.
+
+Las variables con mayor simetria son las correspondientes a:
+
+- Autos
+- Cigarrillos
+
+```{r, echo = FALSE}
 internet %>% select(Nacionalidad,
                     Edad,
                     Estatura,
@@ -250,59 +296,41 @@ internet %>% select(Nacionalidad,
   geom_boxplot(alpha=0.5)
 ```
 
+####  Calcular la desviación intercuartil y detectar presencia de valores salvajes moderados y severos.
 
-```{r}
+Se utiliza como ejemplo la variable Estatura, donde los siguientes valores se consieran salvajes. No se encontraron valores severos.
+
+```{r, echo = FALSE}
+internet$Estatura %>% summary()
 ggplot(internet, aes(x=Estatura)) + geom_boxplot()
-```
 
-```{r}
 q3 = quantile(internet$Estatura, 0.75)
 q1 = quantile(internet$Estatura, 0.25)
 riq = IQR(internet$Estatura)
-```
 
-```{r}
 #1.5 veces es salvaje
 #3 veces es severo
 
-li_salvaje = (q1- 1.5 * riq)[[1]]
+li_salvaje = (q1 - 1.5 * riq)[[1]]
 ls_salvaje = as.numeric(q3 +1.5 * riq )
 
-li_severo = (q1- 3 * riq)[[1]]
-ls_severo = (q3 +3 * riq )[[1]]
+li_severo = (q1 - 3 * riq)[[1]]
+ls_severo = (q3 + 3 * riq )[[1]]
+
+tolerance = 1e-6
+
+internet %>% select(Estatura) %>% group_by(Estatura) %>% summarise(Frecuencia = n()) %>% mutate(Salvaje = (Estatura < li_salvaje | Estatura > ls_salvaje + tolerance ))  %>% filter(Salvaje == TRUE)
+
+internet %>% select(Estatura) %>% group_by(Estatura) %>% summarise(Frecuencia = n()) %>% mutate(Severo = (Estatura < li_severo | Estatura > ls_severo + tolerance ))  %>% filter(Severo == TRUE)
+
+internet %>% mutate(Categoria = case_when(Estatura < li_salvaje | Estatura > ls_salvaje + tolerance ~ "Salvaje",
+                                         Estatura < li_severo | Estatura > ls_severo + tolerance ~ "Severo",
+                                         TRUE ~ "Normal")) %>% # Set other rows to Normal
+                group_by(Categoria) %>% summarise(Frecuencia = n())
 
 ```
 
-
-
-```{r}
-
-internet$Estatura[internet$Estatura > ls_salvaje]
-
-```
-
-```{r}
-internet%>% filter(Estatura > ls_salvaje) %>% 
-  select(Estatura)
-```
-
-
-```{r}
-internet %>% select(Estatura) %>% 
-  mutate(salvaje = (Estatura < li_salvaje | Estatura > ls_salvaje )) %>% 
-  filter(salvaje == TRUE)
-```
-
-
-```{r}
-internet %>% select(Estatura) %>% 
-  mutate(salvaje = (Estatura < li_salvaje | Estatura > ls_salvaje),
-         severo = (Estatura < li_severo | Estatura > ls_severo) ) %>% 
-  count(severo, salvaje)
-```
-
-
-## Ejercicio 3
+### **Ejercicio 3** Gráficos univariados y multivariados - Gorriones.xls
 
 ```{r}
 gorriones <- read_excel("gorriones.xlsx")
@@ -355,9 +383,6 @@ gorriones %>%
 (b) Confeccionar un informe para cada variable( univariado).
 https://cran.r-project.org/web/packages/summarytools/vignettes/introduction.html
 
-```{r}
-library(summarytools)
-```
 
 
 ```{r}
@@ -451,9 +476,6 @@ gorriones %>% select(largototal,
 
 (e) Construir gráficos bivariados para las todas las variables, particionan- do por el grupo de supervivencia (un color para cada grupo). ¿Observa alguna regularidad que pueda explicar la supervivencia?
 
-```{r}
-library(GGally)
-```
 
 
 ```{r}
@@ -470,7 +492,7 @@ ggplot(gorriones, aes(x=largototal, y = extension, color=sobrevida))+
 (f) Construir la matriz de diagramas de dispersión. ¿Considera que algún par de estas medidas están relacionadas? Estudiar si la asociación de al- gunas de estas medidas es diferente en alguno de los grupos.
 
 ```{r}
-library("ggcorrplot")
+
 #http://www.sthda.com/english/wiki/ggcorrplot-visualization-of-a-correlation-matrix-using-ggplot2
 ```
 
@@ -517,9 +539,7 @@ stars(razaperros[,2:6], full=F, cex=0.8, flip.labels = T, labels = razaperros$ra
 ```
 
 ```{r}
-# Library
-library(fmsb)
- 
+
 # Create data: note in High school for Jonathan:
 data <- as.data.frame(matrix( sample( 2:20 , 10 , replace=T) , ncol=10))
 colnames(data) <- c("math" , "english" , "biology" , "music" , "R-coding", "data-viz" , "french" , "physic", "statistic", "sport" )
