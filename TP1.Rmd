@@ -5,166 +5,133 @@ date: "2023-10-07"
 output: html_document
 ---
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
-library("readxl")
-library('tidyverse')
-library('here')
-```
-
-```{r}
-library(readxl)#lectura
+```{r install-libraries, include=FALSE}
+library('tidyverse')# Data manipulation, visualization, and analysis.
+library('here')#Refer to files without hardcoding the full path
 library(dplyr) #manipulacion de datos
+library(readxl)#lectura
 library(kableExtra) #tablas
 library(ggplot2) #graficos
-library(tidyverse) #manipulacion de datos
 library(ggpubr) #para juntar
 library(ggforce) # grafico de violin y jitter
 library(GGally) # ggpairs
 library(corrplot) # para correlogramas
 ```
-
-
-
-```{r}
+```{r file-paths, include=FALSE }
+# With here::here(), you don't need to worry about the specific file path or whether your code will work on different operating systems. It helps make your code more portable and project-independent by automatically resolving file paths based on the location of your script.
 here::here()
 ```
 
-```{r}
+### **Ejercicio 1** - Transformaciones de datos
+
+Seis candidatas son evaluadas para el puesto de recepcionista en una empresa, para ello pasan por dos entrevistas. En la primera las evalúa el responsable de recursos humanos de la empresa (juez 1) y en la segunda el responsable del área de la cual van a depender (juez 2). La asignación de puntajes es en cordialidad, presencia y manejo de idiomas. Los puntajes asignados independientemente por estos jueces se encuentran en el archivo recepcionistas.xls.
+
+#### Calcule el promedio por juez de cada una de las aspirantes.
+
+```{r calculo-promedio, echo = FALSE}
 recepcionistas <- read_excel("recepcionistas.xls")
-```
-
-```{r}
 colnames(recepcionistas) <- gsub(" ", "", colnames(recepcionistas))
+#Se transforman los datos para responder las preguntas del trabajo practico.
+recep_tidy = recepcionistas %>% pivot_longer(cols = 2:7, # Columnas que se quieren transformar
+                                             names_to = "variable",   # Nombre de la nueva columna de variables
+                                             values_to = "puntuacion") %>%
+                                separate_wider_delim(variable, delim = ".", names = c("rubro", "juez")) %>% #Separar la columna Variable en dos columnas Rubro y Juez
+                                mutate(candidatos = as.factor(candidatos), rubro = as.factor(rubro), juez = as.factor(juez)) #Cambiar los valores a tipo factor
+                                #A factor is a data type in R used for categorical variables
+
+#Calcular el promedio por juez de cada una de las aspirantes.
+
+promedio_puntuaciones = recep_tidy %>% group_by(juez, candidatos) %>% summarise(promedio = mean(puntuacion)) %>% pivot_wider(names_from = juez, values_from = promedio)
+new_column_names <- c("Aspirantes", "Juez1", "Juez2")
+names(promedio_puntuaciones) <- new_column_names
+promedio_puntuaciones
 ```
 
-```{r}
-glimpse(recepcionistas)
+#### ¿Cuál le parece que seleccionaría cada uno de ellos?
+
+```{r, echo = FALSE}
+promedio_puntuaciones %>% select(-Juez2) %>% filter(Juez1 == max(Juez1))
+promedio_puntuaciones %>% select(-Juez1) %>% filter(Juez2 == max(Juez2))
+```
+```{r, include=FALSE}
+#recep_tidy %>% 
+#  group_by(juez, candidatos) %>% 
+#  summarise(promedio = mean(puntuacion)) %>% 
+#  filter(juez =="juez1") %>% 
+#  arrange(-promedio)
+
+#recep_tidy %>% 
+#  group_by(juez, candidatos) %>% 
+#  summarise(promedio = mean(puntuacion)) %>% 
+#  filter(juez =="juez2") %>% 
+#  arrange(-promedio)
 ```
 
-```{r}
-recepcionistas %>% head()
-```
+#### ¿Existe coincidencia?
 
-Se transforman los datos para responder las preguntas del trabajo practico de una manera mas practica.
+No hay coincidencia en los resultados obtenidos por los jueces. Mientras que el Juez1 selecciona a Mariana con un promedio de 80 puntos, el Juez2 selecciona a Maia con un puntaje promedio de 73.33 puntos.
 
-```{r}
-recep_tidy = recepcionistas %>%  pivot_longer(cols = 2:7, # Columnas que deseas transformar
-               names_to = "Variable",   # Nombre de la nueva columna de variables
-               values_to = "Puntuacion") %>% 
-  separate_wider_delim(Variable, delim = ".", names = c("rubro", "juez")) %>% 
-  mutate(candidatos = as.factor(candidatos),
-         rubro = as.factor(rubro),
-         juez = as.factor(juez))
-```
+#### Calcule el promedio de cada una de las aspirantes tomando en cuenta todos los rubros y ambos jueces.
 
-```{r}
-recep_tidy %>% head(5)
-```
-
-Calcule en promedio por juez de cada una de las aspirantes. ¿Cuál le parece que seleccionaría cada uno de ellos? ¿Existe coincidencia?
-
-Se calcula el promedio de puntaje por juez y candidata para cada juez.
-
-```{r}
-recep_tidy %>% 
-  group_by(juez, candidatos) %>% 
-  summarise(promedio = mean(Puntuacion)) %>% 
-  pivot_wider(names_from = juez, values_from = promedio)
-```
-
-```{r}
-recep_tidy %>% 
-  group_by(juez, candidatos) %>% 
-  summarise(promedio = mean(Puntuacion)) %>% 
-  filter(juez =="juez1") %>% 
-  arrange(-promedio)
-
-recep_tidy %>% 
-  group_by(juez, candidatos) %>% 
-  summarise(promedio = mean(Puntuacion)) %>% 
-  filter(juez =="juez2") %>% 
-  arrange(-promedio)
-
-```
-
-Calcule el promedio de cada una de las aspirantes tomando en cuenta todos los rubros y ambos jueces.
-
-```{r}
+```{r, echo = FALSE}
 recep_tidy %>% 
   group_by(candidatos) %>% 
-  summarise(promedio = mean(Puntuacion)) %>% 
+  summarise(promedio = mean(puntuacion)) %>% 
   arrange(-promedio)
 ```
 
-Transformar las puntuaciones observadas de modo tal que cada una de las seis variables tenga media 0 y dispersión 1. ¿Cuál sería el objetivo de esta transformación?
+#### Transformar las puntuaciones observadas de modo tal que cada una de las seis variables tenga media 0 y dispersión 1. ¿Cuál sería el objetivo de esta transformación?
 
-```{r}
-recep_tidy %>% 
-  pivot_wider(names_from = c(rubro, juez), values_from = Puntuacion) %>% 
-  mutate(cord_juez1 = scale(cord_juez1),
-         pres_juez1 = scale(pres_juez1),
-         idiom_juez1 = scale(idiom_juez1),
-         cord_juez2 = scale(cord_juez2),
-         pres_juez2 = scale(pres_juez2),
-         idiom_juez2 = scale(idiom_juez2))
+Este proceso tiene como objetivo centralizar los datos alrededor de una media de 0 y escalarlos para tener una desviación estándar de 1. La estandarización facilita la comparación entre variables, mejora la visualización de datos y cumple con las suposiciones de muchos modelos estadísticos. Sin embargo, es importante recordar que la estandarización no siempre es necesaria y debe adaptarse a las necesidades específicas de cada tarea de análisis o modelado.
+
+```{r, echo = FALSE}
+#Transformar datos para cada variable con media 0 y dispersión 1
+recepcionistas_scale= cbind(candidatos=recepcionistas$candidatos, data.frame(scale(recepcionistas[,2:7])))
 ```
 
-```{r}
-cbind(recepcionistas$candidatos, data.frame(scale(recepcionistas[,2:7])) )
+#### Transformar las puntuaciones de modo tal que cada candidata tenga para cada juez media 0 y dispersión 1. ¿Cuál sería el objetivo de esta transformación?
+
+```{r, echo = FALSE}
+recep_tidy_scale = recepcionistas_scale %>% pivot_longer(cols = 2:7, # Columnas que se quieren transformar
+                                            names_to = "variable",   # Nombre de la nueva columna de variables
+                                            values_to = "puntuacion") %>%
+                                separate_wider_delim(variable, delim = ".", names = c("rubro", "juez")) %>% #Separar la columna Variable en dos columnas Rubro y Juez
+                                mutate(candidatos = as.factor(candidatos), rubro = as.factor(rubro), juez = as.factor(juez)) #Cambiar los valores a tipo factor
+                                #A factor is a data type in R used for categorical variables
+
+#Calcular el promedio por juez de cada una de las aspirantes.
+
+promedio_puntuaciones_scale = recep_tidy_scale %>% group_by(juez, candidatos) %>% summarise(promedio = mean(puntuacion)) %>% pivot_wider(names_from = juez, values_from = promedio)
+new_column_names <- c("Aspirantes", "Juez1", "Juez2")
+names(promedio_puntuaciones_scale) <- new_column_names
+promedio_puntuaciones_scale
 ```
 
-```{r}
-recep_tidy %>% 
-  group_by(juez, candidatos) %>% 
-  summarise(promedio = mean(Puntuacion)) %>% 
-  pivot_wider(names_from = juez, values_from = promedio) %>% 
-  mutate(juez1 = scale(juez1), 
-         juez2 = scale(juez2))
+####  Grafique los perfiles multivariados de cada una de las candidatas para ambas transformaciones. ¿Qué observa?
+
+```{r, echo = FALSE, out.width='100%', fig.align='center'}
+recep_tidy_scale %>% ggplot(aes(x=puntuacion, y = candidatos, fill = juez)) + geom_boxplot() 
 ```
 
-
-```{r}
-cbind(recepcionistas$candidatos, recepcionistas[, c(1, 5:7)] %>% mutate(promedio_J2 = (recepcionistas$cord.juez2+recepcionistas$pres.juez2+recepcionistas$idiom.juez2)/3)  %>% select(promedio_J2) %>% scale() %>% data.frame() )
-
-```
-
-```{r}
-cbind(recepcionistas$candidatos, recepcionistas[, c(1, 2:4)] %>% 
-        mutate(promedio_J1 = (recepcionistas$cord.juez1+recepcionistas$pres.juez1+recepcionistas$idiom.juez1)/3) %>%
-        select(promedio_J1) %>% 
-        scale() %>% 
-        data.frame())
-```
-
-```{r}
-recep_tidy %>% ggplot(aes(x=Puntuacion, y = candidatos, fill = juez)) + 
-  geom_boxplot() 
-```
-
-```{r}
-ggplot(recep_tidy,aes(x=rubro,y=Puntuacion,color=candidatos))+
+```{r, echo = FALSE, out.width='100%', fig.align='center'}
+ggplot(recep_tidy_scale,aes(x=rubro,y=puntuacion,color=candidatos))+
   geom_line(aes(group =candidatos))+ 
-  labs(title = "juez 1") + 
+  labs(title = "juez") + 
   theme(axis.text.x  = element_text(angle=90))+
   facet_row(~juez)
 ```
-## Ejercicio 2
+### **Ejercicio 2** -Tipos de variables resúmenes: Internet. 2013
 
-```{r}
+#### Clasificar las variables de la base. Para las variables numéricas construir un gráfico de coordenadas paralelas.
+
+```{r, echo = FALSE, out.width='100%', fig.align='center'}
 internet = read_excel("Internet2013.xls")
-```
-
-```{r}
-scale(internet$Temperatura)
-```
-
-
-Clasificar las variables de la base. Para las variables numéricas construir un gráfico de coordenadas paralelas.
-```{r}
+#gráfico de cajas (no lo pide el enunciado)
 internet %>% select(Nacionalidad,
                     Edad,
                     Estatura,
@@ -176,7 +143,21 @@ internet %>% select(Nacionalidad,
   pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 2:7) %>% 
   ggplot(aes(x=Valor, y= Variable, fill = Nacionalidad))+
   geom_boxplot(alpha=0.5)
-````
+
+#gráfico de coordenadas paralelas
+internet %>% select(Nacionalidad,
+                    Edad,
+                    Estatura,
+                    Uso,
+                    Temperatura,
+                    Autos,
+                    Cigarrillos) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  group_by(Nacionalidad) %>% summarize_all(mean) %>% 
+  ggparcoord(columns = 2:7,  # Variables on x-axis
+             groupColumn = "Nacionalidad", #Variable on y-axis 
+             alphaLines = 0.5)
+```
 
 Construir la tabla de frecuencias de la variable sexo. ¿Hay algún valor que llame la atención? ¿Qué tipo de error considera que es?
 
