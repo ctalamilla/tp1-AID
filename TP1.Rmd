@@ -468,6 +468,90 @@ gorriones %>% select(largototal,
   geom_boxplot(alpha=0.5)
 ```
 
+(e) Construir gráficos bivariados para las todas las variables, particionan- do por el grupo de supervivencia (un color para cada grupo). ¿Observa alguna regularidad que pueda explicar la supervivencia?
+
+```{r}
+library(GGally)
+```
+
+
+```{r}
+
+ggpairs(gorriones, columns = 2:7, aes(color=sobrevida, alpha=0.5))
+```
+
+
+```{r}
+ggplot(gorriones, aes(x=largototal, y = extension, color=sobrevida))+
+  geom_point(alpha=0.7)+
+  geom_smooth(method = lm )
+```
+(f) Construir la matriz de diagramas de dispersión. ¿Considera que algún par de estas medidas están relacionadas? Estudiar si la asociación de al- gunas de estas medidas es diferente en alguno de los grupos.
+
+```{r}
+library("ggcorrplot")
+#http://www.sthda.com/english/wiki/ggcorrplot-visualization-of-a-correlation-matrix-using-ggplot2
+```
+
+```{r}
+cor(gorriones[,2:6])
+```
+```{r}
+
+ggcorrplot(cor(gorriones[,2:6]), hc.order = TRUE, type = "lower",
+   lab = TRUE)
+```
+
+## Ejercicio 4
+
+```{r}
+razaperros <- read_excel("razaperros.xls")
+```
+
+
+(a) Realizar un gráfico de estrellas por raza (utilizando las variables tamaño, peso, velocidad, inteligencia y afectividad.
+
+
+```{r}
+razaperros
+```
+
+```{r}
+
+```
+
+
+```{r}
+ggplot(data = razaperros, aes(x = inteligencia)) + geom_bar(fill = "lightblue", colour = "black")+ coord_polar() + 
+  facet_wrap(~raza)
+```
+
+```{r}
+recepcionistas %>% pivot_longer(cols = 2:7, values_to = 'puntos', names_to = 'variables') %>% 
+  pivot_wider(names_from = variables, values_from = puntos) 
+```
+```{r}
+
+stars(razaperros[,2:6], full=F, cex=0.8, flip.labels = T, labels = razaperros$raza, col.stars = cm.colors(9))
+```
+
+```{r}
+# Library
+library(fmsb)
+ 
+# Create data: note in High school for Jonathan:
+data <- as.data.frame(matrix( sample( 2:20 , 10 , replace=T) , ncol=10))
+colnames(data) <- c("math" , "english" , "biology" , "music" , "R-coding", "data-viz" , "french" , "physic", "statistic", "sport" )
+ 
+# To use the fmsb package, I have to add 2 lines to the dataframe: the max and min of each topic to show on the plot!
+data <- rbind(rep(20,10) , rep(0,10) , data)
+ 
+# Check your data, it has to look like this!
+# head(data)
+
+# The default radar chart 
+radarchart(data)
+```
 
 
 
