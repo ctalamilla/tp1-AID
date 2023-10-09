@@ -284,12 +284,32 @@ riq = IQR(internet$Estatura)
 #1.5 veces es salvaje
 #3 veces es severo
 
-li_salvaje = q1- 1.5 * riq
-ls_salvaje = q3 +1.5 * riq 
+li_salvaje = (q1- 1.5 * riq)[[1]]
+ls_salvaje = as.numeric(q3 +1.5 * riq )
 
-li_severo = q1- 3 * riq
-ls_severo = q3 +3 * riq 
+li_severo = (q1- 3 * riq)[[1]]
+ls_severo = (q3 +3 * riq )[[1]]
 
+```
+
+
+
+```{r}
+
+internet$Estatura[internet$Estatura > ls_salvaje]
+
+```
+
+```{r}
+internet%>% filter(Estatura > ls_salvaje) %>% 
+  select(Estatura)
+```
+
+
+```{r}
+internet %>% select(Estatura) %>% 
+  mutate(salvaje = (Estatura < li_salvaje | Estatura > ls_salvaje )) %>% 
+  filter(salvaje == TRUE)
 ```
 
 
@@ -298,7 +318,156 @@ internet %>% select(Estatura) %>%
   mutate(salvaje = (Estatura < li_salvaje | Estatura > ls_salvaje),
          severo = (Estatura < li_severo | Estatura > ls_severo) ) %>% 
   count(severo, salvaje)
+```
+
+
+## Ejercicio 3
+
+```{r}
+gorriones <- read_excel("gorriones.xlsx")
+```
+
+```{r}
+gorriones %>% head(3)
+```
+
+```{r}
+gorriones %>% summary()
+```
+(a) Indicar en cada caso de que tipo de variable se trata.
+Pajaro : ID
+Sobrevida : Factor
+
+```{r}
+str(gorriones)
+```
+```{r}
+gorriones = gorriones %>% 
+  mutate(sobrevida = as.factor(sobrevida))
+
+gorriones %>% head(3)
+```
+```{r}
 
 ```
+
+
+```{r}
+gorriones %>% 
+  select(humero, cabeza, sobrevida) %>% #columnas
+  filter(humero > 18, cabeza < 50) %>% # filas
+  mutate(nuevoColumna = humero **2, 
+         nuevaColumna2 = nuevoColumna /2,
+         humero = humero/100) %>% # crea columnas calculadad o editadas
+  group_by(sobrevida) %>% #siempre desp del GBy viene una f(X) de transformacion o agregacion
+  #summarise_all(mean)
+  summarise(promedio = mean(humero), 
+            desvio = sd(humero))
+
+#verbos
+# Select => columnas
+# filter => filas
+# mutate
+# group by
+# summarise
+```
+(b) Confeccionar un informe para cada variable( univariado).
+https://cran.r-project.org/web/packages/summarytools/vignettes/introduction.html
+
+```{r}
+library(summarytools)
+```
+
+
+```{r}
+gorriones %>% summary()
+```
+```{r}
+descr(gorriones)
+```
+
+```{r}
+dfSummary(gorriones)
+```
+
+
+```{r}
+dfSummary(gorriones) %>% view()
+```
+
+(c) Realizar en el caso que corresponda un histograma. Ensayar el número de intervalos que conviene en cada variable, indicar si utiliza algún criterio.
+
+```{r}
+k = 10 * log(nrow(gorriones))#dixo
+k2 = 1 + 3.322 * log(nrow(gorriones))#strudges
+hlargoT = 3.49 * sd(gorriones$largototal) * nrow(gorriones)**-(1/3)
+```
+
+Ejemplo GGPLOT
+```{r}
+ggplot(gorriones   ,    aes(x=largototal, y = humero))  +
+  geom_point(aes( color = extension, size = extension, shape = sobrevida))+
+  geom_line()
+
+```
+
+
+```{r}
+#colnames(gorriones)[c(2,3,4,5,6)]
+ggplot(gorriones, aes(x=largototal)) +
+  geom_histogram(bins = round(k2),fill = 'red', color='black')
+  
+
+```
+
+```{r}
+ggplot(gorriones, aes(x=largototal)) +
+    geom_histogram(binwidth = hlargoT, fill = 'red', color='black' )
+```
+
+(d) Realizar un boxplot comparativo para cada una de estas variables par- ticionando por el grupo definido por la supervivencia. ¿Le parece que alguna de estas variables está relacionada con la supervivencia, es decir que toma valores muy distintos en ambos grupos? Analizar en todos los casos la presencia de outliers.
+
+```{r}
+ggplot(gorriones, aes(x= humero, y = sobrevida)) +
+  geom_boxplot()
+```
+
+```{r}
+recepcionistas %>% pivot_longer(cols = 2:7, names_to = 'rubrojuez', values_to = 'valores') %>% 
+  separate_wider_delim(rubrojuez, delim = ".", names = c("rubro", "juez"))
+  
+```
+
+
+
+#Ojo!!, las variables estan transformadas
+
+```{r}
+gorriones %>% select(largototal,
+                    extension,
+                    cabeza,
+                    humero,
+                    esternon,
+                    sobrevida) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 1:5) %>% 
+  ggplot(aes(x=Valor, y= Variable, fill = sobrevida))+
+  geom_boxplot(alpha=0.5)
+```
+
+```{r}
+gorriones %>% select(largototal,
+                    extension,
+                    cabeza,
+                    humero,
+                    esternon,
+                    sobrevida) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 1:5) %>% 
+  ggplot(aes(x=Valor, y= Variable, fill = sobrevida))+
+  geom_boxplot(alpha=0.5)
+```
+
+
 
 
