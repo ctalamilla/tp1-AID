@@ -255,6 +255,12 @@ internet %>% select(Nacionalidad,
 ```{r}
 str(internet)
 ```
+
+```{r}
+internet$Nacionalidad = as.factor(internet$Nacionalidad)
+```
+
+
 ***Respuesta: Grafico de coordenadas Paralelas.***
 
 ```{r}
@@ -281,7 +287,7 @@ internet %>% select(Nacionalidad,
                     Edad,
                     Estatura,
                     Uso,
-                    Temperatura,
+                   Temperatura,
                     Autos,
                     Cigarrillos) %>% 
   mutate_if(is.numeric, ~scale(.)) %>% 
@@ -290,6 +296,11 @@ internet %>% select(Nacionalidad,
   ggparcoord(columns = 2:7,  # Variables on x-axis
              groupColumn = "Nacionalidad", #Variable on y-axis 
              alphaLines = 0.7)
+```
+Gráfico de Coordenadas Paralelas tipico.
+```{r}
+internet %>% 
+  ggparcoord(columns = 2:7,  alphaLines = 0.1, boxplot = T)
 ```
 
 ### b. Construir la tabla de frecuencias de la variable sexo. ¿Hay algún valor que llame la atención? ¿Qué tipo de error considera que es?
@@ -331,7 +342,7 @@ internet %>%
   summarise(Frecuencia = n()) %>% 
   arrange(-Edad)
 ```
-Para explorar la variable.
+Para explorar la variable por nacionalidad.
 ```{r}
 internet %>% 
   select(Edad, Nacionalidad) %>% 
@@ -362,12 +373,19 @@ Existen varios registros que indican ocurrencias de edades erroneas, entre ellas
 
 ## c2. Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
 
-```{r}
-internet$Sitio %>% summary()
-```
 
 ```{r}
 freq(internet$Sitio)
+```
+
+```{r}
+sitios = data.frame(id=c(1,2,3,4,5,6,7), Sitio= c("chat", "email", "buscadores", "software", "musica", "deportes", "otros"))
+sitios
+```
+Se realizó un left_join() para agregar los valores respectivos a cada Sitio.
+
+```{r}
+internet %>% left_join(sitios, by=c("Sitio"= "id")) %>% select(Sitio.y) %>% freq()
 ```
 
 ```{r, echo = FALSE}
