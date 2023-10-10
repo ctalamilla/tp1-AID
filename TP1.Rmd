@@ -256,6 +256,25 @@ internet %>% select(Nacionalidad,
 str(internet)
 ```
 ***Respuesta: Grafico de coordenadas Paralelas.***
+
+```{r}
+internet %>% select(Nacionalidad,
+                    Edad,
+                    Estatura,
+                    Uso,
+                    Temperatura,
+                    Autos,
+                    Cigarrillos) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  group_by(Nacionalidad) %>%
+  summarize_all(mean) %>% 
+  pivot_longer(cols = 2:7, values_to = 'valor', names_to = 'variable_std') %>% 
+  ggplot(aes(x=variable_std, y = valor, group= Nacionalidad, color=Nacionalidad))+
+  geom_line()+
+  geom_point()
+```
+
+
 ```{r}
 #gráfico de coordenadas paralelas
 internet %>% select(Nacionalidad,
@@ -301,6 +320,11 @@ internet %>% ggplot(aes(x=Sexo, fill = as.factor(Sexo))) +
 
 ### c. Ordenar los datos por la variable Edad. ¿Encontró algún valor extraño? ¿Qué tipo de error puede ser? Idem Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
 
+Resumen de Edad:
+```{r}
+internet$Edad %>% summary()
+```
+
 ```{r}
 internet %>% 
   group_by(Edad) %>% 
@@ -317,17 +341,18 @@ internet %>%
 ```
 
 ¿Encontró algún valor extraño? ¿Qué tipo de error puede ser? 
-
+Según el criterio de 6 sigmas se detectaron los siguientes valores atipicos. 
 ```{r}
 internet %>% 
   select(Edad) %>% 
   mutate( Edad2 = scale(Edad)) %>% 
   filter(Edad2< -3 | Edad2 > 3) %>% arrange(Edad)
 ```
-
+Los valores erroneos pueden ser los siguientes.
 ```{r}
 internet %>% filter(Edad < 0 | Edad>110) %>% select(Edad)
 ```
+
 Existen varios registros que indican ocurrencias de edades erroneas, entre ellas:
 
 - Un registro que indica una edad de 120
@@ -335,30 +360,86 @@ Existen varios registros que indican ocurrencias de edades erroneas, entre ellas
 - Un registro que indica una edad de 280
 - Un registro que indica una edad de -44
 
-
+## c2. Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
 
 ```{r}
-internet$Edad %>% summary()
+internet$Sitio %>% summary()
 ```
 
 ```{r}
-internet %>% arrange(Edad) %>% select(Edad)
+freq(internet$Sitio)
 ```
 
+```{r, echo = FALSE}
+internet %>% 
+  group_by(Sitio) %>% 
+  summarise(Frecuencia = n()) %>% 
+  arrange(-Sitio)
+```
+***Rta: los valores validos son del 1 al 7.***
 
+Existen varios registros que cuyos valores escapan a los valores establecidos para la variable categorica sitio, entre ellos:
+
+- Un registro que indica un valor de 8 (no corresponde a ningun valor esperado para esta variable que solo toma los valores del 1 al 7)
+- Un registro que indica un valor de 28 (no corresponde a ningun valor esperado para esta variable que solo toma los valores del 1 al 7)
+
+
+### (d) Proceda de forma similar para las variables Temperatura, Autos y Ciga- rrillos.
+
+#### 1. Temperatura
 
 ```{r}
-internet %>% filter(Edad >=0)
+internet$Temperatura %>% summary()
 ```
 
 ```{r}
-table(internet$Sitio)
+internet %>% 
+  group_by(Temperatura) %>% 
+  summarise(Frecuencia = n()) %>% 
+  arrange(-Temperatura)
 ```
+
+```{r}
+internet %>% 
+  select(Temperatura) %>% 
+  mutate( Temperatura2 = scale(Temperatura)) %>% 
+  filter(Temperatura2< -3 | Temperatura2> 3) %>% arrange(Temperatura)
+```
+```{r}
+internet %>% filter(Temperatura > 40) %>% select(Temperatura)
+```
+Existen dos registros que cuyos valores escapan a los valores establecidos para la variable temperatura, entre ellos:
+
+- Un registro que indica una temperatura media anual de 94 grados celcius
+- Un registro que indica una temperatura media anual de 131 grados celcius
+
+
+
+```{r, echo = FALSE, out.width='100%', fig.align='center'}
+#Calcular la cantidad de intervalos en los cuales clasificar los registros de acuerdo a la variable temperatura
+k = 10 * log(nrow(internet))#dixo
+k2 = 1 + 3.322 * log(nrow(internet))#strudges
+
+temperaturas = internet %>% select(Temperatura) %>% 
+               mutate(temperatura = cut(Temperatura, breaks  = k2)) %>% 
+               group_by(temperatura) %>%
+               summarise(fi = n()) %>%
+               mutate(f = fi / sum(fi) * 100)
+
+count_bars = round(k2) 
+colors = rainbow(count_bars)
+internet %>% select(Temperatura) %>% ggplot(aes(x=Temperatura)) + geom_histogram(bins = round(k2), fill=colors, color='black')
+```
+
+#### 2. Autos
+
+
 
 ```{r}
 k = 10 * log(nrow(internet))#dixo
 k2 = 1 + 3.322 * log(nrow(internet))#strudges
 ```
+
 
 ```{r}
 internet %>% select(Temperatura) %>% 
