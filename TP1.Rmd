@@ -35,7 +35,6 @@ here::here()
 
 Seis candidatas son evaluadas para el puesto de recepcionista en una em- presa, para ello pasan por dos entrevistas. En la primera las evalúa el responsa- ble de recursos humanos de la empresa (juez 1) y en la segunda el responsable del área de la cual van a depender (juez 2). La asignación de puntajes es en cordialidad, presencia y manejo de idiomas. Los puntajes asignados indepen- dientemente por estos jueces se encuentran en el archivo recepcionistas.xls.
 
-
 ### Lectura y Transformación de Datos
 
 (a) Calcule en promedio por juez de cada una de las aspirantes. ¿Cuál le parece que seleccionaría cada uno de ellos? ¿Existe coincidencia?
@@ -92,15 +91,16 @@ recep_tidy %>%
   group_by(juez, candidatos) %>% 
   summarise(promedio = mean(Puntuacion)) %>% 
   filter(juez =="juez1") %>% 
-  arrange(-promedio)
+  arrange(-promedio) %>% head(1)
 
 recep_tidy %>% 
   group_by(juez, candidatos) %>% 
   summarise(promedio = mean(Puntuacion)) %>% 
   filter(juez =="juez2") %>% 
-  arrange(-promedio)
+  arrange(-promedio)%>% head(1)
 
 ```
+
 ```{r warning=FALSE, message=FALSE}
 recep_tidy %>% 
   group_by(juez, candidatos) %>% 
@@ -110,8 +110,9 @@ recep_tidy %>%
   facet_wrap(~juez, ncol=2)
 ```
 
+**Respuesta: las candidatas elegidas fueron Mariana (Juez1) y Maia(Juez2)**
 
-Calcule el promedio de cada una de las aspirantes tomando en cuenta todos los rubros y ambos jueces.
+### b. Calcule el promedio de cada una de las aspirantes tomando en cuenta todos los rubros y ambos jueces.
 
 ```{r}
 recep_tidy %>% 
@@ -120,7 +121,7 @@ recep_tidy %>%
   arrange(-promedio)
 ```
 
-Transformar las puntuaciones observadas de modo tal que cada una de las seis variables tenga media 0 y dispersión 1. ¿Cuál sería el objetivo de esta transformación?
+### c. Transformar las puntuaciones observadas de modo tal que cada una de las seis variables tenga media 0 y dispersión 1. ¿Cuál sería el objetivo de esta transformación?
 
 ```{r}
 recep_tidy %>% 
@@ -132,12 +133,11 @@ recep_tidy %>%
          pres_juez2 = scale(pres_juez2),
          idiom_juez2 = scale(idiom_juez2))
 ```
+***Respuesta: El objetivo de esta transformación es hacer comparables los valores de ambos jueces en todos los rubros. ***
 
-```{r}
-cbind(recepcionistas$candidatos, data.frame(scale(recepcionistas[,2:7])) )
-```
+### d. Transformar las puntuaciones de modo tal que cada candidata tenga para cada juez media 0 y dispersión 1. ¿Cuál sería el objetivo de esta transfor- mación?
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 recep_tidy %>% 
   group_by(juez, candidatos) %>% 
   summarise(promedio = mean(Puntuacion)) %>% 
@@ -145,20 +145,9 @@ recep_tidy %>%
   mutate(juez1 = scale(juez1), 
          juez2 = scale(juez2))
 ```
+### e. Grafique los perfiles multivariados de cada una de las candidatas para ambas transformaciones. ¿Qué observa?
 
-```{r}
-cbind(recepcionistas$candidatos, recepcionistas[, c(1, 5:7)] %>% mutate(promedio_J2 = (recepcionistas$cord.juez2+recepcionistas$pres.juez2+recepcionistas$idiom.juez2)/3)  %>% select(promedio_J2) %>% scale() %>% data.frame() )
-
-```
-
-```{r}
-cbind(recepcionistas$candidatos, recepcionistas[, c(1, 2:4)] %>% 
-        mutate(promedio_J1 = (recepcionistas$cord.juez1+recepcionistas$pres.juez1+recepcionistas$idiom.juez1)/3) %>%
-        select(promedio_J1) %>% 
-        scale() %>% 
-        data.frame())
-```
-
+#### Sin transformar.
 ```{r}
 recep_tidy %>% ggplot(aes(x=Puntuacion, y = candidatos, fill = juez)) + 
   geom_boxplot() 
@@ -171,19 +160,82 @@ ggplot(recep_tidy,aes(x=rubro,y=Puntuacion,color=candidatos))+
   theme(axis.text.x  = element_text(angle=90))+
   facet_row(~juez)
 ```
+#### Con Variables Transformadas
+
+```{r}
+recep_tidy %>% 
+  pivot_wider(names_from = c(rubro, juez), values_from = Puntuacion) %>% 
+  mutate(cord_juez1 = scale(cord_juez1),
+         pres_juez1 = scale(pres_juez1),
+         idiom_juez1 = scale(idiom_juez1),
+         cord_juez2 = scale(cord_juez2),
+         pres_juez2 = scale(pres_juez2),
+         idiom_juez2 = scale(idiom_juez2)) %>% 
+        pivot_longer(cols = 2:7, # Columnas que deseas transformar
+               names_to = "Variable",   # Nombre de la nueva columna de variables
+               values_to = "Puntuacion") %>% # Nombre de la nueva columna que tendra los valores
+  separate_wider_delim(Variable, delim = "_", names = c("rubro", "juez")) %>% # Se separan la columna Variable en 2 variables
+  mutate(candidatos = as.factor(candidatos), # las variables categorias se pasan a tipo factor.
+         rubro = as.factor(rubro),
+         juez = as.factor(juez))%>% 
+  ggplot(aes(x=Puntuacion, y = candidatos, fill = juez)) + 
+  geom_boxplot() 
+```
+
+```{r}
+recep_tidy %>% 
+  pivot_wider(names_from = c(rubro, juez), values_from = Puntuacion) %>% 
+  mutate(cord_juez1 = scale(cord_juez1),
+         pres_juez1 = scale(pres_juez1),
+         idiom_juez1 = scale(idiom_juez1),
+         cord_juez2 = scale(cord_juez2),
+         pres_juez2 = scale(pres_juez2),
+         idiom_juez2 = scale(idiom_juez2)) %>% 
+        pivot_longer(cols = 2:7, # Columnas que deseas transformar
+               names_to = "Variable",   # Nombre de la nueva columna de variables
+               values_to = "Puntuacion") %>% # Nombre de la nueva columna que tendra los valores
+  separate_wider_delim(Variable, delim = "_", names = c("rubro", "juez")) %>% # Se separan la columna Variable en 2 variables
+  mutate(candidatos = as.factor(candidatos), # las variables categorias se pasan a tipo factor.
+         rubro = as.factor(rubro),
+         juez = as.factor(juez)) %>% 
+  ggplot(aes(x=rubro,y=Puntuacion,color=candidatos))+
+  geom_line(aes(group =candidatos))+ 
+  labs(title = "juez 1") + 
+  theme(axis.text.x  = element_text(angle=90))+
+  facet_row(~juez)
+```
+```{r warning=FALSE, message=FALSE}
+recep_tidy %>% 
+  group_by(juez, candidatos) %>% 
+  summarise(promedio = mean(Puntuacion)) %>% 
+  pivot_wider(names_from = juez, values_from = promedio) %>% 
+  mutate(juez1 = scale(juez1), 
+         juez2 = scale(juez2)) %>% 
+  pivot_longer(cols=2:3, names_to = 'juez', values_to = 'valor') %>% 
+  ggplot(aes(y= juez, x = valor, fill= juez))+
+  geom_boxplot()
+```
+
+***Respuesta: La primera transformacion (6 columnnas) es útil para comparar las puntuaciones individuales de cada candidata y rubro. Mientras que la segunda transformación es util para comprar en promedio la puntuación de los jueces*** 
+
 
 ## Ejercicio 2
+
+(Tipos de variables resúmenes: (Datos: Internet. 2013)). Se han registrado sobre 1500 individuos las variables siguientes:
+ID: número de identificación del registro. Nacionalidad
+Edad: cumplida en años
+Sexo: Masculino (1) Femenino (2) Estatura: en m
+Sitio: sitio preferido al que se conecta; 1- chat 2 - correo electrónico 3- buscadores 4 – software 5 – música 6 – deportes 7 - otros
+Uso: Tiempo de uso promedio por día en minutos
+Temperatura: media anual de la zona de residencia
+Autos: cantidad de autos en la manzana donde reside
+Cigarrillos: Cantidad de cigarrillos consumidos mientras utiliza Internet
 
 ```{r}
 internet = read_excel("Internet2013.xls")
 ```
 
-```{r}
-scale(internet$Temperatura)
-```
-
-Clasificar las variables de la base. Para las variables numéricas construir un gráfico de coordenadas paralelas.
-
+Gráfico de cajas de explorar las variables. Tener en cuenta que están escaladas.
 ```{r}
 internet %>% select(Nacionalidad,
                     Edad,
@@ -196,21 +248,94 @@ internet %>% select(Nacionalidad,
   pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 2:7) %>% 
   ggplot(aes(x=Valor, y= Variable, fill = Nacionalidad))+
   geom_boxplot(alpha=0.5)
+```
+### a. Clasificar las variables de la base. Para las variables numéricas construir un gráfico de coordenadas paralelas.
 
-Construir la tabla de frecuencias de la variable sexo. ¿Hay algún valor que llame la atención? ¿Qué tipo de error considera que es?
+***Respuesta: Tipo de datos en variables de la base de datos.***
+```{r}
+str(internet)
+```
+***Respuesta: Grafico de coordenadas Paralelas.***
+```{r}
+#gráfico de coordenadas paralelas
+internet %>% select(Nacionalidad,
+                    Edad,
+                    Estatura,
+                    Uso,
+                    Temperatura,
+                    Autos,
+                    Cigarrillos) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  group_by(Nacionalidad) %>%
+  summarize_all(mean) %>% 
+  ggparcoord(columns = 2:7,  # Variables on x-axis
+             groupColumn = "Nacionalidad", #Variable on y-axis 
+             alphaLines = 0.7)
+```
 
-unique(internet$Sexo)
+### b. Construir la tabla de frecuencias de la variable sexo. ¿Hay algún valor que llame la atención? ¿Qué tipo de error considera que es?
+
+```{r}
+library(summarytools)
+```
+
+***Rta: Tabla de Frecuencias para Sexo***
+```{r}
+freq(internet$Sexo)
+```
+***Rta: Tabla de Frecuencias para Sexo, version rbase***
+```{r}
+table(internet$Sexo) #counts the frequency of each unique value or combination of values in one or more categorical variables and presents the counts in a tabular format
+```
+
+```{r, echo = FALSE, out.width='100%', fig.align='center'}
+
+internet %>% ggplot(aes(x=Sexo, fill = as.factor(Sexo))) +
+  geom_bar() +
+  labs(title="Tabla de Frecuencias", y='Cantidad Observaciones', x= 'Sexo', fill='Sexo') +
+  scale_fill_brewer(palette = "Set1")
+  #scale_fill_manual(values = c("0" = "blue", "1" = "green", "2" = "red"))
+#https://ggplot2-book.org/scales-colour
+```
+***Rta: Error de tipeo, hay un valor de Sexo = 0***
+
+### c. Ordenar los datos por la variable Edad. ¿Encontró algún valor extraño? ¿Qué tipo de error puede ser? Idem Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
+
+```{r}
+internet %>% 
+  group_by(Edad) %>% 
+  summarise(Frecuencia = n()) %>% 
+  arrange(-Edad)
+```
+Para explorar la variable.
+```{r}
+internet %>% 
+  select(Edad, Nacionalidad) %>% 
+  ggplot(aes(x=Edad, fill= Nacionalidad))+
+  geom_histogram(bins = 20)+
+  facet_wrap(~Nacionalidad)
+```
+
+¿Encontró algún valor extraño? ¿Qué tipo de error puede ser? 
+
+```{r}
+internet %>% 
+  select(Edad) %>% 
+  mutate( Edad2 = scale(Edad)) %>% 
+  filter(Edad2< -3 | Edad2 > 3) %>% arrange(Edad)
 ```
 
 ```{r}
-table(internet$Sexo)
+internet %>% filter(Edad < 0 | Edad>110) %>% select(Edad)
 ```
+Existen varios registros que indican ocurrencias de edades erroneas, entre ellas:
 
-```{r}
-internet %>% ggplot(aes(x=Sexo))+geom_bar()
-```
+- Un registro que indica una edad de 120
+- Un registro que indica una edad de 180
+- Un registro que indica una edad de 280
+- Un registro que indica una edad de -44
 
-Ordenar los datos por la variable Edad. ¿Encontró algún valor extraño? ¿Qué tipo de error puede ser? item Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
+
 
 ```{r}
 internet$Edad %>% summary()
@@ -219,6 +344,8 @@ internet$Edad %>% summary()
 ```{r}
 internet %>% arrange(Edad) %>% select(Edad)
 ```
+
+
 
 ```{r}
 internet %>% filter(Edad >=0)
