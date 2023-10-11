@@ -5,17 +5,17 @@ date: "2023-10-07"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE,  warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 library("readxl")
 library('tidyverse')
 library('here')
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 library(readxl)#lectura
 library(dplyr) #manipulacion de datos
 library(kableExtra) #tablas
@@ -260,6 +260,15 @@ str(internet)
 internet$Nacionalidad = as.factor(internet$Nacionalidad)
 ```
 
+```{r}
+sitios = data.frame(id=c(1,2,3,4,5,6,7), Sitio= c("chat", "email", "buscadores", "software", "musica", "deportes", "otros"))
+sitios
+```
+Se realizó un left_join() para agregar los valores respectivos a cada Sitio.
+
+```{r}
+internet %>% left_join(sitios, by=c("Sitio"= "id"))
+```
 
 ***Respuesta: Grafico de coordenadas Paralelas.***
 
@@ -305,7 +314,7 @@ internet %>%
 
 ### b. Construir la tabla de frecuencias de la variable sexo. ¿Hay algún valor que llame la atención? ¿Qué tipo de error considera que es?
 
-```{r}
+```{r }
 library(summarytools)
 ```
 
@@ -371,6 +380,7 @@ Existen varios registros que indican ocurrencias de edades erroneas, entre ellas
 - Un registro que indica una edad de 280
 - Un registro que indica una edad de -44
 
+
 ## c2. Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
 
 
@@ -378,15 +388,6 @@ Existen varios registros que indican ocurrencias de edades erroneas, entre ellas
 freq(internet$Sitio)
 ```
 
-```{r}
-sitios = data.frame(id=c(1,2,3,4,5,6,7), Sitio= c("chat", "email", "buscadores", "software", "musica", "deportes", "otros"))
-sitios
-```
-Se realizó un left_join() para agregar los valores respectivos a cada Sitio.
-
-```{r}
-internet %>% left_join(sitios, by=c("Sitio"= "id")) %>% select(Sitio.y) %>% freq()
-```
 
 ```{r, echo = FALSE}
 internet %>% 
@@ -394,6 +395,23 @@ internet %>%
   summarise(Frecuencia = n()) %>% 
   arrange(-Sitio)
 ```
+A continuacion se realiza la tabla de frecuencias para Sitio incluyendo los nombres de la variable.
+```{r}
+internet %>% left_join(sitios, by=c("Sitio"= "id")) %>% select(Sitio.y) %>% freq()
+```
+```{r}
+internet %>% left_join(sitios, by=c("Sitio"= "id")) %>%
+  group_by(Sitio.y) %>% 
+  count()
+```
+```{r}
+internet %>% left_join(sitios, by=c("Sitio"= "id")) %>% 
+  ggplot(aes(x=Sitio.y))+
+  geom_bar(aes(fill=Sitio.y ), color='darkgrey')+
+  coord_polar()+
+  scale_fill_brewer(palette = 'Spectral')
+```
+
 ***Rta: los valores validos son del 1 al 7.***
 
 Existen varios registros que cuyos valores escapan a los valores establecidos para la variable categorica sitio, entre ellos:
@@ -402,19 +420,34 @@ Existen varios registros que cuyos valores escapan a los valores establecidos pa
 - Un registro que indica un valor de 28 (no corresponde a ningun valor esperado para esta variable que solo toma los valores del 1 al 7)
 
 
-### (d) Proceda de forma similar para las variables Temperatura, Autos y Ciga- rrillos.
+### (d) Proceda de forma similar para las variables Temperatura, Autos y Cigarrillos.
 
 #### 1. Temperatura
+Construir la tabla de frecuencias.
+¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
 
+Exploramos la variable temperatura de manera descriptiva.
 ```{r}
 internet$Temperatura %>% summary()
 ```
 
+Ordenamos los datos y contamos la cantidad de datos en cada registro.
 ```{r}
 internet %>% 
   group_by(Temperatura) %>% 
   summarise(Frecuencia = n()) %>% 
   arrange(-Temperatura)
+```
+Se realiza un histograma para ver la distribución de la variable. 
+```{r}
+internet %>% ggplot(aes(x=Temperatura, fill=Nacionalidad)) +
+  geom_histogram(bins = 30, color='black', alpha=0.5)
+```
+De la misma manera se explora la variable usando boxplots.
+```{r}
+internet %>% ggplot(aes(x=Temperatura, y=Nacionalidad, fill=Nacionalidad))+
+  geom_boxplot()+
+  geom_jitter(alpha=0.1, size = 0.4)
 ```
 
 ```{r}
@@ -423,6 +456,7 @@ internet %>%
   mutate( Temperatura2 = scale(Temperatura)) %>% 
   filter(Temperatura2< -3 | Temperatura2> 3) %>% arrange(Temperatura)
 ```
+
 ```{r}
 internet %>% filter(Temperatura > 40) %>% select(Temperatura)
 ```
@@ -430,7 +464,6 @@ Existen dos registros que cuyos valores escapan a los valores establecidos para 
 
 - Un registro que indica una temperatura media anual de 94 grados celcius
 - Un registro que indica una temperatura media anual de 131 grados celcius
-
 
 
 ```{r, echo = FALSE, out.width='100%', fig.align='center'}
@@ -448,8 +481,33 @@ count_bars = round(k2)
 colors = rainbow(count_bars)
 internet %>% select(Temperatura) %>% ggplot(aes(x=Temperatura)) + geom_histogram(bins = round(k2), fill=colors, color='black')
 ```
+Tabla de Frecuencias para Temperatura
+
+```{r}
+cut_width(internet$Temperatura,5) %>% freq()
+```
+
+
 
 #### 2. Autos
+
+```{r}
+internet$Autos %>% summary()
+```
+
+```{r}
+internet %>% 
+  group_by(Autos) %>% 
+  summarise(Frecuencia = n()) %>% 
+  arrange(-Autos)
+```
+
+```{r}
+
+
+internet %>% select(Autos) %>% ggplot(aes(x=Autos))+geom_boxplot(fill = 'blue', color='black')
+internet %>% filter(Autos >200)
+```
 
 
 
@@ -497,7 +555,7 @@ internet %>% select(Autos) %>%
 internet %>% summary()
 ```
 
-g
+
 
 ```{r}
 internet %>% select(Nacionalidad,
