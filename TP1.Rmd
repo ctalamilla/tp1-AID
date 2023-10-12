@@ -338,7 +338,7 @@ internet %>% ggplot(aes(x=Sexo, fill = as.factor(Sexo))) +
 ```
 ***Rta: Error de tipeo, hay un valor de Sexo = 0***
 
-### c. Ordenar los datos por la variable Edad. ¿Encontró algún valor extraño? ¿Qué tipo de error puede ser? Idem Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
+### c1. Ordenar los datos por la variable Edad. ¿Encontró algún valor extraño? ¿Qué tipo de error puede ser? Idem Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
 
 Resumen de Edad:
 ```{r}
@@ -420,7 +420,7 @@ Existen varios registros que cuyos valores escapan a los valores establecidos pa
 - Un registro que indica un valor de 28 (no corresponde a ningun valor esperado para esta variable que solo toma los valores del 1 al 7)
 
 
-### (d) Proceda de forma similar para las variables Temperatura, Autos y Cigarrillos.
+### d. Proceda de forma similar para las variables Temperatura, Autos y Cigarrillos.
 
 #### 1. Temperatura
 Construir la tabla de frecuencias.
@@ -503,10 +503,96 @@ internet %>%
 ```
 
 ```{r}
-
-
 internet %>% select(Autos) %>% ggplot(aes(x=Autos))+geom_boxplot(fill = 'blue', color='black')
+
+```
+
+```{r}
 internet %>% filter(Autos >200)
+```
+
+¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
+
+Existe un registro que indica la presencia de 2680 autos en una unica manzana, lo cual indica un claro error en el valor ingresado.
+
+#### 3. Cigarrillos
+
+
+```{r}
+internet$Cigarrillos %>% summary()
+```
+
+
+```{r}
+internet %>% group_by(Cigarrillos) %>% summarise(Frecuencia = n()) %>% arrange(-Cigarrillos)
+```
+
+
+```{r}
+internet %>% select(Cigarrillos) %>% ggplot(aes(x=Cigarrillos))+geom_boxplot(fill = 'blue', color='black')
+```
+
+```{r}
+
+internet %>% filter(Cigarrillos >30)
+```
+
+Existen varios registros que cuyos valores son extremadamente elevados al punto de considerarse altamente improbables y erroneos:
+
+- Un individuo que consume 100 cicarrillos mientras utiliza internet
+- Un individuo que consume 75 cicarrillos mientras utiliza internet
+
+
+#### ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
+
+Existen varios registros que cuyos valores son extremadamente elevados al punto de considerarse altamente improbables y erroneos:
+
+- Un individuo que consume 100 cicarrillos mientras utiliza internet
+- Un individuo que consume 75 cicarrillos mientras utiliza internet
+
+
+#### e. Elimine de la base los valores que no son posibles y que seguramente corresponde a un error de tipeo. Detalle valores/registros que le hayan llamado la atención pero no deban ser eliminados necesariamente.
+
+Errores de Tipeo.
+
+##### Sexo
+
+- Sexo = 0
+
+##### Edad
+
+- Un registro que indica una edad de 120
+- Un registro que indica una edad de 180
+- Un registro que indica una edad de 280
+- Un registro que indica una edad de -44
+
+##### Sitio
+
+- Un registro que indica un valor de 8 (no corresponde a ningun valor esperado para esta variable que solo toma los valores del 1 al 7)
+- Un registro que indica un valor de 28 (no corresponde a ningun valor esperado para esta variable que solo toma los valores del 1 al 7)
+
+##### Temperatura
+- Un registro que indica una temperatura media anual de 94 grados celcius
+- Un registro que indica una temperatura media anual de 131 grados celcius
+
+##### Autos
+- Existe un registro que indica la presencia de 2680 autos en una unica manzana, lo cual indica un
+claro error en el valor ingresado.
+
+##### Cigarrilos
+
+- Un individuo que consume 100 cicarrillos mientras utiliza internet
+- Un individuo que consume 75 cicarrillos mientras utiliza internet
+
+Eliminar Datos Erroneos o Imposibles
+```{r}
+internet %>% filter(Sexo!=0,
+                    Edad>0, Edad<100,
+                    between(Sitio, 1,7),
+                    Temperatura<50,
+                    Autos<500,
+                    Cigarrillos<50)
+
 ```
 
 
