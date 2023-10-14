@@ -584,7 +584,7 @@ claro error en el valor ingresado.
 - Un individuo que consume 100 cicarrillos mientras utiliza internet
 - Un individuo que consume 75 cicarrillos mientras utiliza internet
 
-Eliminar Datos Erroneos o Imposibles
+#### e.2. Eliminar Datos Erroneos o Imposibles
 ```{r}
 internet %>% filter(Sexo!=0,
                     Edad>0, Edad<100,
@@ -593,6 +593,151 @@ internet %>% filter(Sexo!=0,
                     Autos<500,
                     Cigarrillos<50)
 
+```
+
+#### f. ¿Para cuáles de las variables tiene sentido calcular la media? ¿Y la me- diana?¿Para cuáles de las variables tiene sentido calcular la media? ¿Y la mediana?
+
+Tiene sentido calcular media y mediana paraquellas variables que son numericas, no asi para las categoricas.
+
+```{r warning=FALSE, message=FALSE}
+sexo = data.frame(id=c(1,2, -1), Sexo=c('Masculino', 'Femenino', 'Error'))
+
+```
+
+```{r}
+internet %>% 
+  left_join(sitios, by=c("Sitio"= "id")) %>% 
+  left_join(sexo, by=c('Sexo'='id')) %>% 
+  select(-c(Sexo, Sitio)) %>% 
+  glimpse()
+```
+#### g ¿Cuáles de las variables le parecen simétricas a partir de estos resúmenes? Confirme estas observaciones mediante un boxplot.
+
+Las variables con mayor simetria son las correspondientes a:
+
+- Autos
+- Edad
+
+
+```{r, echo = FALSE}
+internet %>% select(Nacionalidad,
+                    Edad,
+                    Estatura,
+                    Uso,
+                    Temperatura,
+                    Autos,
+                    Cigarrillos) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 2:7) %>% 
+  ggplot(aes(x=Valor, y= Variable))+
+  geom_boxplot(alpha=0.5)+
+  xlim(-3,3)
+```
+```{r}
+library(ggridges)
+```
+
+```{r}
+internet %>% select(Nacionalidad,
+                    Edad,
+                    Estatura,
+                    Uso,
+                    Temperatura,
+                    Autos,
+                    Cigarrillos) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 2:7) %>% 
+  ggplot(aes(x=Valor, y= Variable, fill=Variable))+
+  geom_density_ridges(alpha=0.5)+
+  scale_fill_brewer(palette = "Set2")+
+  xlim(-3,3)
+```
+
+
+```{r warning=F, message=F}
+internet %>% select(Nacionalidad,
+                    Edad,
+                    Estatura,
+                    Uso,
+                    Temperatura,
+                    Autos,
+                    Cigarrillos) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 2:7) %>% 
+  ggplot(aes(x=Valor, y= Variable, fill=Variable))+
+  geom_density_ridges(alpha=0.5)+
+  scale_fill_brewer(palette = "Set2")+
+  xlim(-3,3)+
+  facet_wrap(~Nacionalidad)
+```
+
+#### (h) Calcular la desviación intercuartil y  detectar presencia de valores salvajes moderados y severos.
+
+Funcion para deteccion de valores atipicos
+```{r}
+
+select_column <- function(dataframe, column_name) {
+  if (column_name %in% names(dataframe)) {
+    a = dataframe[[column_name]]
+   
+    q3 = quantile(a, 0.75)[[1]]
+    q1 = quantile(a, 0.25)[[1]]
+    riq = q3-q1
+    li_salvaje = (q1 - 1.5 * riq)
+    ls_salvaje = (q3 + 1.5 * riq )
+    li_severo = (q1 - 3 * riq)
+    ls_severo = (q3 + 3 * riq )
+    df = data.frame(Lim_outliers = c('Li_Salvaje','Ls_Salvaje', 'Li_Severo','Ls_Severo'), 
+                    valores = c(li_salvaje, ls_salvaje, li_severo, ls_severo ))
+    
+    tolerance = 1e-6
+    df2 = internet %>% mutate(Categoria = case_when(a < li_salvaje | a > ls_salvaje + tolerance ~ "Salvaje",
+                                         a < li_severo | a > ls_severo + tolerance ~ "Severo",
+                                         TRUE ~ "Normal")) %>% 
+      filter(Categoria != 'Normal') %>% 
+      select(column_name, Categoria)
+    result = list(valores_criticos = df,
+                  df_filtrado = df2)
+    return(result)
+  } else {
+    stop("El nombre de la columna proporcionado no se encuentra en el dataframe.")
+  }
+}
+```
+
+##### Edad
+```{r}
+select_column(internet, 'Edad')$valores_criticos
+select_column(internet, 'Edad')$df_filtrado
+```
+
+#### Estatura
+```{r}
+select_column(internet, 'Estatura')$valores_criticos
+select_column(internet, 'Estatura')$df_filtrado
+```
+
+##### Uso
+```{r}
+select_column(internet, 'Uso')$valores_criticos
+select_column(internet, 'Uso')$df_filtrado
+```
+
+##### Temperatura
+```{r}
+select_column(internet, 'Temperatura')$valores_criticos
+select_column(internet, 'Temperatura')$df_filtrado
+```
+
+##### Autos
+```{r}
+select_column(internet, 'Autos')$valores_criticos
+select_column(internet, 'Autos')$df_filtrado
+```
+##### Cigarillos
+```{r}
+select_column(internet, 'Cigarrillos')$valores_criticos
+select_column(internet, 'Cigarrillos')$df_filtrado
 ```
 
 
