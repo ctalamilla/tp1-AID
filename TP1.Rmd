@@ -886,22 +886,15 @@ gorriones %>% select(-c(sobrevida, pajaro)) %>% pivot_longer(cols=1:5,names_to =
   summarise(sd = sd(valor), .groups = "drop") %>% 
   mutate(hbind = sd * nrow(gorriones)**-(1/3))
 ```
-
-Ejemplo GGPLOT
-
-```{r}
-ggplot(gorriones   ,    aes(x=largototal, y = humero))  +
-  geom_point(aes( color = extension, size = extension, shape = sobrevida))+
-  geom_line()
-
-```
-
 ```{r}
 #colnames(gorriones)[c(2,3,4,5,6)]
 ggplot(gorriones, aes(x=largototal)) +
-  geom_histogram(bins = round(k2),fill = 'red', color='black')
-  
-
+ geom_histogram(binwidth = 1, aes(x = largototal, fill = factor(sobrevida)), color = 'black') + 
+  facet_grid(sobrevida~., scales = 'free') +
+  xlab("largo total") + 
+  ylab("Frecuencia") + 
+  ggtitle("Distribución de la variable Largo Total para los distintos Sobrevida") +
+  theme_minimal()
 ```
 
 ```{r}
