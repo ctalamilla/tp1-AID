@@ -2,7 +2,14 @@
 title: "TP1"
 author: "Cristian Salinas"
 date: "2023-10-07"
-output: html_document
+output: 
+  html_document:
+    toc: true     
+    toc_depth: 2           
+    toc_float: 
+      collapsed: false        
+      smooth_scroll: true         
+    
 ---
 
 ```{r setup, include=FALSE,  warning=FALSE, message=FALSE}
@@ -381,7 +388,7 @@ Existen varios registros que indican ocurrencias de edades erroneas, entre ellas
 - Un registro que indica una edad de -44
 
 
-## c2. Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
+### c2. Construir la tabla de frecuencias de la variable Sitio. ¿Encuentra algún valor que le llame la atención? ¿Qué tipo de error puede ser?
 
 
 ```{r}
@@ -1044,6 +1051,9 @@ Si hay diferencias en las correlaciones para cada grupo.
 ```{r}
 a+b
 ```
+```{r}
+#install.packages("corrr")
+```
 
 
 ```{r}
@@ -1086,7 +1096,7 @@ library(fmsb)
 
 ```{r}
 #raza
-raza = razaperros[2,2:7]
+raza <-razaperros[2,2:7]
 data <- rbind(rep(3,6) , rep(0,6) , raza)
  
 # Check your data, it has to look like this!
@@ -1096,19 +1106,4 @@ data <- rbind(rep(3,6) , rep(0,6) , raza)
 radarchart(data)
 ```
 
-```{r}
-data <- as.data.frame(matrix( sample( 2:20 , 10 , replace=T) , ncol=10))
-colnames(data) <- c("math" , "english" , "biology" , "music" , "R-coding", "data-viz" , "french" , "physic", "statistic", "sport" )
 
-data$individual <- c("individual1", "individual2", "individual3")
-
-# El primer individuo
-data[1, 1:10] <- c( 20 , 10 , 14 , 8 , 2 , 8 , 4 , 4 , 19 , 14 )
-
-# El segundo individuo
-data[2, 1:10] <- c( 10 , 5 , 10 , 4 , 20 , 15 , 8 , 9 , 12 , 17 )
-
-# El tercero individuo
-data[3, 1:10] <- c( 5 , 14 , 14 , 8 , 4 , 9 , 4 , 4 , 10 , 12 )
-
-```
