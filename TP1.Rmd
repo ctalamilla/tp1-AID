@@ -995,38 +995,20 @@ gorriones %>% select(largototal,
 ```
 Usando la información del boxplot no es posible diferenciar si las variables afectan a la sobrevida. Existen diferencias en las medianas para cada grupo, sin embargo las diferencias no parecen ser significativas.
 
+### (e) Construir gráficos bivariados para las todas las variables, particionan- do por el grupo de supervivencia (un color para cada grupo). ¿Observa alguna regularidad que pueda explicar la supervivencia?
 
-```{r}
-gorriones %>% select(largototal,
-                    extension,
-                    cabeza,
-                    humero,
-                    esternon,
-                    sobrevida) %>% 
-  mutate_if(is.numeric, ~scale(.)) %>% 
-  pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 1:5) %>% 
-  ggplot(aes(x=Valor, y= Variable, fill = sobrevida))+
-  geom_boxplot(alpha=0.5)
+```{r, warning=F, message=F}
+gorr=gorriones%>%select(largototal:esternon)
+sobrev=factor(gorriones$sobrevida)
+ggpairs(gorr, aes(color=sobrev),
+        upper = list(continuous = "density", combo = "box_no_facet"),
+        lower = list(continuous = "points" , combo ="dot_no_facet"))+
+  theme_bw()
 ```
+No se observan graficamente posibilidades de segregar los datos a partir de la combinacion de 2 variables.
 
-(e) Construir gráficos bivariados para las todas las variables, particionan- do por el grupo de supervivencia (un color para cada grupo). ¿Observa alguna regularidad que pueda explicar la supervivencia?
 
-```{r}
-library(GGally)
-```
-
-```{r}
-
-ggpairs(gorriones, columns = 2:7, aes(color=sobrevida, alpha=0.5))
-```
-
-```{r}
-ggplot(gorriones, aes(x=largototal, y = extension, color=sobrevida))+
-  geom_point(alpha=0.7)+
-  geom_smooth(method = lm )
-```
-
-(f) Construir la matriz de diagramas de dispersión. ¿Considera que algún par de estas medidas están relacionadas? Estudiar si la asociación de al- gunas de estas medidas es diferente en alguno de los grupos.
+###(f) Construir la matriz de diagramas de dispersión. ¿Considera que algún par de estas medidas están relacionadas? Estudiar si la asociación de algunas de estas medidas es diferente en alguno de los grupos.
 
 ```{r}
 library("ggcorrplot")
@@ -1038,11 +1020,45 @@ cor(gorriones[,2:6])
 ```
 
 ```{r}
-
 ggcorrplot(cor(gorriones[,2:6]), hc.order = TRUE, type = "lower",
    lab = TRUE)
 ```
 
+```{r}
+library(patchwork)
+```
+
+
+```{r}
+a = ggcorrplot(cor(gorriones[gorriones$sobrevida=='Si',2:6]), hc.order = TRUE, type = "lower",
+   lab = TRUE)+ ggtitle("Sobrevida Si")
+```
+
+```{r}
+b = ggcorrplot(cor(gorriones[gorriones$sobrevida=='No',2:6]), hc.order = TRUE, type = "lower",
+   lab = TRUE)+ggtitle("Sobrevida No")
+```
+
+Estudiar si la asociación de algunas de estas medidas es diferente en alguno de los grupos.
+Si hay diferencias en las correlaciones para cada grupo.
+```{r}
+a+b
+```
+
+
+```{r}
+library(corrr)
+```
+
+
+```{r}
+gorriones %>% 
+  select(-c(pajaro, sobrevida)) %>% 
+  correlate() %>% 
+  shave() %>% 
+  rplot(print_cor=TRUE) +
+  theme(axis.text.x=element_text(angle = 90, hjust=1))
+```
 ## Ejercicio 4
 
 ```{r}
