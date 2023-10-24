@@ -775,9 +775,6 @@ internet %>% select(Autos) %>% ggplot(aes(x=Autos))+
   geom_boxplot(fill = 'blue', color='black')
 ```
 
-```{r}
-cut(internet$Autos, breaks  = k)
-```
 
 ```{r}
 internet %>% select(Autos) %>% 
@@ -848,7 +845,7 @@ gorriones
 gorriones %>% summary()
 ```
 
-(a) Indicar en cada caso de que tipo de variable se trata. Pajaro : ID, Sobrevida : Factor
+### (a) Indicar en cada caso de que tipo de variable se trata. Pajaro : ID, Sobrevida : Factor
 
 ```{r}
 str(gorriones)
@@ -856,7 +853,7 @@ str(gorriones)
 Largototal, extension, cabeza, humero, esternon son variables continuas (mediciones) por su parte sobrevida es categórica (la vamos a considerar un factor).
 
 
-(b) Confeccionar un informe para cada variable( univariado). <https://cran.r-project.org/web/packages/summarytools/vignettes/introduction.html>
+### (b) Confeccionar un informe para cada variable( univariado). <https://cran.r-project.org/web/packages/summarytools/vignettes/introduction.html>
 
 ```{r}
 library(summarytools)
@@ -865,11 +862,12 @@ library(summarytools)
 ```{r}
 gorriones %>% summary()
 ```
+
 ```{r}
 descr(gorriones)
 ```
 
-(c) Realizar en el caso que corresponda un histograma. Ensayar el número de intervalos que conviene en cada variable, indicar si utiliza algún criterio.
+### (c) Realizar en el caso que corresponda un histograma. Ensayar el número de intervalos que conviene en cada variable, indicar si utiliza algún criterio.
 
 Se calcularon los valores de k (numero de bins en un histograma).
 ```{r}
@@ -878,14 +876,22 @@ k2 = 1 + 3.322 * log(nrow(gorriones))#strudges
 
 ```
 
+
+```{r}
+print(c(k, k2))
+```
+
 Tambien se calculó el ancho del bin para cada variable.
 
 ```{r}
-gorriones %>% select(-c(sobrevida, pajaro)) %>% pivot_longer(cols=1:5,names_to = "variable", values_to = "valor") %>% 
+gorriones %>% select(-c(sobrevida, pajaro)) %>% 
+  pivot_longer(cols=1:5,names_to = "variable", values_to = "valor") %>% 
   group_by(variable) %>% 
   summarise(sd = sd(valor), .groups = "drop") %>% 
   mutate(hbind = sd * nrow(gorriones)**-(1/3))
 ```
+
+Se optó por usar el ancho de bin de cada variable. A continuación los Histogramas de clas 5 variables.
 ```{r}
 #colnames(gorriones)[c(2,3,4,5,6)]
 ggplot(gorriones, aes(x=largototal)) +
@@ -896,28 +902,86 @@ ggplot(gorriones, aes(x=largototal)) +
   ggtitle("Distribución de la variable Largo Total para los distintos Sobrevida") +
   theme_minimal()
 ```
-
 ```{r}
-ggplot(gorriones, aes(x=largototal)) +
-    geom_histogram(binwidth = hlargoT, fill = 'red', color='black' )
-```
-
-(d) Realizar un boxplot comparativo para cada una de estas variables par- ticionando por el grupo definido por la supervivencia. ¿Le parece que alguna de estas variables está relacionada con la supervivencia, es decir que toma valores muy distintos en ambos grupos? Analizar en todos los casos la presencia de outliers.
-
-```{r}
-ggplot(gorriones, aes(x= humero, y = sobrevida)) +
-  geom_boxplot()
+ggplot(gorriones, aes(x=extension)) +
+ geom_histogram(binwidth = 1.38, aes(x = extension, fill = factor(sobrevida)), color = 'black') + 
+  facet_grid(sobrevida~., scales = 'free') +
+  xlab("Extension") + 
+  ylab("Frecuencia") + 
+  ggtitle("Distribución de la variable Extensión para los distintos Sobrevida") +
+  theme_minimal()
 ```
 
 ```{r}
-recepcionistas %>% pivot_longer(cols = 2:7, names_to = 'rubrojuez', values_to = 'valores') %>% 
-  separate_wider_delim(rubrojuez, delim = ".", names = c("rubro", "juez"))
-  
+ggplot(gorriones, aes(x=cabeza)) +
+ geom_histogram(binwidth = 0.21, aes(x = cabeza, fill = factor(sobrevida)), color = 'black') + 
+  facet_grid(sobrevida~., scales = 'free') +
+  xlab("Cabeza") + 
+  ylab("Frecuencia") + 
+  ggtitle("Distribución de la variable Cabeza para los distintos Sobrevida") +
+  theme_minimal()
 ```
 
-#Ojo!!, las variables estan transformadas
+```{r}
+ggplot(gorriones, aes(x=humero)) +
+ geom_histogram(binwidth = 0.14, aes(x = humero, fill = factor(sobrevida)), color = 'black') + 
+  facet_grid(sobrevida~., scales = 'free') +
+  xlab("Humero") + 
+  ylab("Frecuencia") + 
+  ggtitle("Distribución de la variable Humero para los distintos Sobrevida") +
+  theme_minimal()
+```
 
 ```{r}
+ggplot(gorriones, aes(x=esternon)) +
+ geom_histogram(binwidth = 0.27, aes(x = esternon, fill = factor(sobrevida)), color = 'black') + 
+  facet_grid(sobrevida~., scales = 'free') +
+  xlab("Esternon") + 
+  ylab("Frecuencia") + 
+  ggtitle("Distribución de la variable Esternon para los distintos Sobrevida") +
+  theme_minimal()
+```
+
+De manera complementaria se realizaron diagramas de dispersión usando las funciones de densidad.
+```{r}
+gorriones %>% select(-c(pajaro)) %>% 
+  pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 1:5) %>% 
+  ggplot(aes(x=Valor, fill = sobrevida)) +
+  geom_density() + 
+  facet_grid(sobrevida~Variable, scales = 'free') +
+  xlab("Variables") + 
+  ylab("Frecuencia") + 
+  ggtitle("Distribución de Variables") 
+``` 
+
+Finalmente para que las variables puedan ser comparadas entre sí se realizó una tranformación a puntuaciones Z y se las graficó en la misma escala.
+
+```{r}
+gorriones %>% select(-c(pajaro)) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 1:5) %>% 
+  ggplot(aes(x=Valor, y= Variable, fill=Variable))+
+  geom_density_ridges(alpha=0.5)+
+  scale_fill_brewer(palette = "Set2")+
+  xlim(-3,3)
+```
+
+
+```{r}
+gorriones %>% select(-c(pajaro)) %>% 
+  mutate_if(is.numeric, ~scale(.)) %>% 
+  pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 1:5) %>% 
+  ggplot(aes(x=Valor, y= Variable, fill=sobrevida))+
+  geom_density_ridges(alpha=0.5)+
+  scale_fill_brewer(palette = "Set2")+
+  xlim(-3,3)
+```
+
+### (d) Realizar un boxplot comparativo para cada una de estas variables particionando por el grupo definido por la supervivencia. ¿Le parece que alguna de estas variables está relacionada con la supervivencia, es decir que toma valores muy distintos en ambos grupos? Analizar en todos los casos la presencia de outliers.
+
+Para poder responder la pregunta se realiza un grafico transformando los valores y comparando todas las variables. 
+
+```{r, warning=F, message=F}
 gorriones %>% select(largototal,
                     extension,
                     cabeza,
@@ -927,8 +991,10 @@ gorriones %>% select(largototal,
   mutate_if(is.numeric, ~scale(.)) %>% 
   pivot_longer(names_to ="Variable", values_to = 'Valor', cols = 1:5) %>% 
   ggplot(aes(x=Valor, y= Variable, fill = sobrevida))+
-  geom_boxplot(alpha=0.5)
+  geom_boxplot(alpha=0.5, notch=TRUE)
 ```
+Usando la información del boxplot no es posible diferenciar si las variables afectan a la sobrevida. Existen diferencias en las medianas para cada grupo, sin embargo las diferencias no parecen ser significativas.
+
 
 ```{r}
 gorriones %>% select(largototal,
